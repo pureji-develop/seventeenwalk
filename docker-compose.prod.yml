@@ -1,0 +1,46 @@
+services:
+  # Edge reverse proxy (HTTPS + ACME)
+  nginx:
+    image: ghcr.io/pureji-develop/seventeenwalk-nginx:latest
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - certbot-etc:/etc/letsencrypt
+      - certbot-var:/var/lib/letsencrypt
+      - certbot-www:/var/www/certbot
+    depends_on:
+      - sw-web
+      - sw-backend
+    restart: always
+
+  # Frontend static (SPA)
+  sw-web:
+    image: ghcr.io/pureji-develop/seventeenwalk-web:latest
+    container_name: seventeenwalk-web-1
+    expose:
+      - "80"
+    restart: always
+
+  # Backend (in-memory; no DB)
+  sw-backend:
+    image: ghcr.io/pureji-develop/seventeenwalk-backend:latest
+    container_name: seventeenwalk-backend-1
+    environment:
+      - PORT=8080
+      - APP_ENV=production
+      - TOTAL_ROUNDS=${TOTAL_ROUNDS:-4}
+      - BUILD_TIMEOUT_SEC=${BUILD_TIMEOUT_SEC:-180}
+    restart: always
+
+  certbot:
+    image: certbot/certbot
+    volumes:
+      - certbot-etc:/etc/letsencrypt
+      - certbot-var:/var/lib/letsencrypt
+      - certbot-www:/var/www/certbot
+
+volumes:
+  certbot-etc:
+  certbot-var:
+  certbot-www:

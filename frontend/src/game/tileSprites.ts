@@ -1,0 +1,124 @@
+import * as Phaser from 'phaser';
+import type { TileView } from '../types/protocol';
+import {
+  frameIndexForKind,
+  TILE_DISPLAY_H,
+  TILE_DISPLAY_W,
+  TILE_FRAME_H,
+  TILE_FRAME_W,
+  TILE_GAP,
+  TILE_SCALE,
+  TILES_KEY,
+} from '../utils/tiles';
+
+const RIVER_ROW_COUNTS = [6, 6, 5] as const;
+const RIVER_MAX_COLS = 6;
+
+export function addTileSprite(
+  scene: Phaser.Scene,
+  root: Phaser.GameObjects.Container,
+  x: number,
+  y: number,
+  tile: TileView,
+  scale = TILE_SCALE
+): Phaser.GameObjects.Image {
+  const frame = frameIndexForKind(tile.kind);
+  const img = scene.add.image(x, y, TILES_KEY, frame).setScale(scale);
+  root.add(img);
+  return img;
+}
+
+export function drawTileRowCentered(
+  scene: Phaser.Scene,
+  root: Phaser.GameObjects.Container,
+  tiles: TileView[],
+  y: number,
+  scale = 0.8
+) {
+  const tw = Math.round(TILE_FRAME_W * scale);
+  const gap = TILE_GAP;
+  const totalW = tiles.length * (tw + gap) - gap;
+  const startX = (scene.scale.width - totalW) / 2 + tw / 2;
+  tiles.forEach((t, i) => {
+    addTileSprite(scene, root, startX + i * (tw + gap), y, t, scale);
+  });
+}
+
+export function drawFaceDownRow(
+  scene: Phaser.Scene,
+  root: Phaser.GameObjects.Container,
+  count: number,
+  y: number,
+  scale = 0.72
+) {
+  const tw = Math.round(TILE_FRAME_W * scale);
+  const th = Math.round(TILE_FRAME_H * scale);
+  const gap = 3;
+  const totalW = count * (tw + gap) - gap;
+  const startX = (scene.scale.width - totalW) / 2 + tw / 2;
+  for (let i = 0; i < count; i++) {
+    const x = startX + i * (tw + gap);
+    const back = scene.add.rectangle(x, y, tw - 1, th - 1, 0xf5f0e6, 1);
+    back.setStrokeStyle(1, 0xc9c2b4, 1);
+    root.add(back);
+  }
+}
+
+export function riverRowPitch(scale: number): number {
+  const th = Math.round(TILE_FRAME_H * scale);
+  return th + 5;
+}
+
+export function riverBlockHeight(scale: number): number {
+  const th = Math.round(TILE_FRAME_H * scale);
+  return 2 * riverRowPitch(scale) + th;
+}
+
+export function drawRiverGrid(
+  scene: Phaser.Scene,
+  root: Phaser.GameObjects.Container,
+  tiles: TileView[],
+  topCenterY: number,
+  opts?: {
+    highlightId?: number;
+    scale?: number;
+    side?: 'self' | 'opponent';
+  }
+) {
+  const scale = opts?.scale ?? 0.7;
+  const side = opts?.side ?? 'self';
+  const upsideDown = side === 'opponent';
+  const tw = Math.round(TILE_FRAME_W * scale);
+  const th = Math.round(TILE_FRAME_H * scale);
+  const gap = 3;
+  const pitch = riverRowPitch(scale);
+  const maxCols = RIVER_MAX_COLS;
+  const gridW = maxCols * (tw + gap) - gap;
+  const left = (scene.scale.width - gridW) / 2;
+  let idx = 0;
+
+  for (let fillRow = 0; fillRow < RIVER_ROW_COUNTS.length; fillRow++) {
+    const cols = RIVER_ROW_COUNTS[fillRow];
+    const visualRow = side === 'opponent' ? 2 - fillRow : fillRow;
+    const y = topCenterY + visualRow * pitch;
+
+    for (let c = 0; c < cols; c++) {
+      if (idx < tiles.length) {
+        const t = tiles[idx];
+        const colFromLeft = side === 'opponent' ? maxCols - 1 - c : c;
+        const x = left + colFromLeft * (tw + gap) + tw / 2;
+        const highlight = opts?.highlightId != null && t.id === opts.highlightId;
+        if (highlight) {
+          const glow = scene.add.rectangle(x, y, tw + 8, th + 8, 0xf5d76e, 0.55);
+          glow.setStrokeStyle(2, 0xffe566, 1);
+          root.add(glow);
+        }
+        const img = addTileSprite(scene, root, x, y, t, scale);
+        if (upsideDown) img.setAngle(180);
+      }
+      idx++;
+    }
+  }
+}
+
+export { TILE_DISPLAY_H, TILE_DISPLAY_W, TILE_FRAME_H, TILE_FRAME_W, TILE_GAP, TILE_SCALE };

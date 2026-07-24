@@ -1,0 +1,83 @@
+# --- OS / editors ---
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+.idea/
+.vscode/
+*.code-workspace
+
+# --- Env / secrets (keep *.example tracked) ---
+.env
+.env.*
+!.env.example
+!**/.env.example
+*.pem
+*.key
+*.crt
+*.p12
+id_rsa
+id_ed25519
+.secrets/
+
+# --- Logs / temp ---
+*.log
+*.tmp
+*.temp
+tmp/
+temp/
+.cache/
+
+# --- Frontend (Node / Vite / Phaser) ---
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+frontend/coverage/
+frontend/*.local
+frontend/.eslintcache
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# --- Backend (Go) ---
+backend/bin/
+backend/dist/
+backend/coverage.out
+backend/coverage.html
+backend/*.test
+backend/*.exe
+backend/*.out
+*.test
+*.prof
+*.coverprofile
+vendor/
+
+# --- Python (scripts / export) ---
+__pycache__/
+*.py[cod]
+*$py.class
+.Python
+.venv/
+venv/
+.env/
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# --- Docker / local volumes ---
+docker-data/
+.docker/
+
+# --- TLS / certbot local copies (prod uses volumes) ---
+letsencrypt/
+certbot/
+*.acme.json
+
+# --- Generated / scratch ---
+zzz_codes/
+*.bak
+*.orig
+*.rej

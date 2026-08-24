@@ -1,5 +1,6 @@
 import * as Phaser from 'phaser';
 import type { TileView } from '../types/protocol';
+import { FONT_UI, UI_COLOR } from '../constants/theme';
 import {
   frameIndexForKind,
   TILE_DISPLAY_H,
@@ -119,6 +120,38 @@ export function drawRiverGrid(
       idx++;
     }
   }
+}
+
+export function drawWaitBottomRight(
+  scene: Phaser.Scene,
+  root: Phaser.GameObjects.Container,
+  waitKinds: string[],
+  opts?: { marginRight?: number; y?: number; scale?: number }
+) {
+  if (!Array.isArray(waitKinds) || waitKinds.length === 0) return;
+  const scale = opts?.scale ?? 0.62;
+  const tw = Math.round(TILE_FRAME_W * scale);
+  const gap = TILE_GAP;
+  const marginRight = opts?.marginRight ?? 16;
+  const y = opts?.y ?? scene.scale.height - 36;
+  const totalW = waitKinds.length * (tw + gap) - gap;
+  const tilesRight = scene.scale.width - marginRight;
+  const startX = tilesRight - totalW;
+
+  root.add(
+    scene.add
+      .text(startX - 6, y, '待ち', {
+        fontFamily: FONT_UI,
+        fontSize: '11px',
+        color: UI_COLOR.muted,
+      })
+      .setOrigin(1, 0.5)
+  );
+
+  waitKinds.forEach((kind, i) => {
+    const cx = startX + tw / 2 + i * (tw + gap);
+    addTileSprite(scene, root, cx, y, { id: -3000 - i, kind }, scale);
+  });
 }
 
 export { TILE_DISPLAY_H, TILE_DISPLAY_W, TILE_FRAME_H, TILE_FRAME_W, TILE_GAP, TILE_SCALE };

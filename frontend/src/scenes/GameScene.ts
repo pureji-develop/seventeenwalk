@@ -17,6 +17,7 @@ import {
   drawFaceDownRow as drawFaceDownRowTo,
   drawRiverGrid as drawRiverGridTo,
   drawTileRowCentered as drawTileRowCenteredTo,
+  drawWaitBottomRight,
   riverBlockHeight as riverBlockHeightOf,
 } from '../game/tileSprites';
 
@@ -540,18 +541,7 @@ export class GameScene extends Phaser.Scene {
       )
     );
 
-    const scoreLine =
-      `${s.you.name} ${formatPoints(youScore)}` +
-      `  —  ${formatPoints(oppScore)} ${s.opponent.name || '相手'}`;
-    this.root.add(
-      this.add
-        .text(this.scale.width - 24, 16, scoreLine, {
-          fontFamily: FONT_UI,
-          fontSize: '15px',
-          color: UI_COLOR.ivory,
-        })
-        .setOrigin(1, 0)
-    );
+    this.drawHeaderScoreBadges(s.you.name, s.opponent.name || '相手', youScore, oppScore);
 
     if (s.you.agariAbandoned) {
       this.root.add(
@@ -579,6 +569,93 @@ export class GameScene extends Phaser.Scene {
           .setOrigin(0.5, 0)
       );
     }
+  }
+
+  /** 右上: 名前1行目・得点2行目の2列バッジ（— は上下同じ位置） */
+  private drawHeaderScoreBadges(
+    youName: string,
+    oppName: string,
+    youScore: number,
+    oppScore: number
+  ) {
+    const marginRight = 24;
+    const dashGap = 8;
+    const padX = 10;
+    const padY = 5;
+    const innerGap = 2;
+    const topY = 12;
+    const dashChar = '—';
+
+    const nameStyle: Phaser.Types.GameObjects.Text.TextStyle = {
+      fontFamily: FONT_UI,
+      fontSize: '13px',
+      color: UI_COLOR.ivory,
+    };
+    const scoreStyle: Phaser.Types.GameObjects.Text.TextStyle = {
+      fontFamily: FONT_UI,
+      fontSize: '14px',
+      fontStyle: 'bold',
+      color: UI_COLOR.gold,
+    };
+    const dashStyle: Phaser.Types.GameObjects.Text.TextStyle = {
+      fontFamily: FONT_UI,
+      fontSize: '13px',
+      color: UI_COLOR.muted,
+    };
+
+    const youScoreStr = formatPoints(youScore);
+    const oppScoreStr = formatPoints(oppScore);
+
+    const measure = (text: string, style: Phaser.Types.GameObjects.Text.TextStyle) => {
+      const t = this.add.text(0, 0, text, style);
+      const size = { w: t.width, h: t.height };
+      t.destroy();
+      return size;
+    };
+
+    const youNameM = measure(youName, nameStyle);
+    const oppNameM = measure(oppName, nameStyle);
+    const youScoreM = measure(youScoreStr, scoreStyle);
+    const oppScoreM = measure(oppScoreStr, scoreStyle);
+    const dashM = measure(dashChar, dashStyle);
+
+    const leftColW = Math.max(youNameM.w, youScoreM.w);
+    const rightColW = Math.max(oppNameM.w, oppScoreM.w);
+    const rowH = youNameM.h;
+    const badgeH = padY * 2 + rowH + innerGap + youScoreM.h;
+    const leftBadgeW = leftColW + padX * 2;
+    const rightBadgeW = rightColW + padX * 2;
+
+    const totalW = leftBadgeW + dashGap + dashM.w + dashGap + rightBadgeW;
+    const blockRight = this.scale.width - marginRight;
+    const blockLeft = blockRight - totalW;
+
+    const leftBadgeX = blockLeft;
+    const rightBadgeX = blockLeft + leftBadgeW + dashGap + dashM.w + dashGap;
+    const dashX = blockLeft + leftBadgeW + dashGap + dashM.w / 2;
+
+    const nameY = topY + padY;
+    const scoreY = nameY + rowH + innerGap;
+
+    const badge = this.add.graphics();
+    badge.fillStyle(PHASER_COLOR.panel, 0.78);
+    badge.fillRoundedRect(leftBadgeX, topY, leftBadgeW, badgeH, 6);
+    badge.fillRoundedRect(rightBadgeX, topY, rightBadgeW, badgeH, 6);
+    badge.lineStyle(1, 0xe8eef4, 0.14);
+    badge.strokeRoundedRect(leftBadgeX, topY, leftBadgeW, badgeH, 6);
+    badge.strokeRoundedRect(rightBadgeX, topY, rightBadgeW, badgeH, 6);
+    this.root.add(badge);
+
+    const leftCenterX = leftBadgeX + leftBadgeW / 2;
+    const rightCenterX = rightBadgeX + rightBadgeW / 2;
+
+    this.root.add(this.add.text(leftCenterX, nameY, youName, nameStyle).setOrigin(0.5, 0));
+    this.root.add(this.add.text(leftCenterX, scoreY, youScoreStr, scoreStyle).setOrigin(0.5, 0));
+    this.root.add(this.add.text(rightCenterX, nameY, oppName, nameStyle).setOrigin(0.5, 0));
+    this.root.add(this.add.text(rightCenterX, scoreY, oppScoreStr, scoreStyle).setOrigin(0.5, 0));
+    this.root.add(
+      this.add.text(dashX, topY + badgeH / 2, dashChar, dashStyle).setOrigin(0.5, 0.5)
+    );
   }
 
   private phaseLabel(s: PublicState): string {
@@ -716,14 +793,8 @@ export class GameScene extends Phaser.Scene {
     this.drawPoolRow(row2, poolBottomY, myTurn, legal);
 
     const waitKinds = Array.isArray(s.you.waits) ? s.you.waits : [];
-    this.drawWaitRow(waitKinds, handY - 54);
+    drawWaitBottomRight(this, this.root, waitKinds, { y: h - 36 });
     this.drawTileRowCentered(sortTilesByKind(s.you.hand ?? []), handY, 0.78);
-  }
-
-  private drawWaitRow(waitKinds: string[], waitY: number) {
-    if (!Array.isArray(waitKinds) || waitKinds.length === 0) return;
-    const waitTiles: TileView[] = waitKinds.map((kind, i) => ({ id: -3000 - i, kind }));
-    this.drawTileRowCentered(waitTiles, waitY, 0.62);
   }
 
   private drawPoolRow(
@@ -982,7 +1053,7 @@ export class GameScene extends Phaser.Scene {
   /** ロン結果: 右上の目アイコン（押下で盤面 ↔ モーダル） */
   private addRonEyeToggle(peeking: boolean) {
     const x = this.scale.width - 36;
-    const y = 58;
+    const y = 78;
     const accent = peeking ? 0xd4b06a : 0xe8eef4;
     const fill = peeking ? 0x2a2210 : PHASER_COLOR.panel;
 

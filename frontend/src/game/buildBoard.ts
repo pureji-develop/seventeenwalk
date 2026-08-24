@@ -1,8 +1,8 @@
 import * as Phaser from 'phaser';
 import type { PublicState, TileView } from '../types/protocol';
 import { FONT_UI, PHASER_COLOR, UI_COLOR } from '../constants/theme';
-import { sortTilesByKind } from '../utils/tiles';
-import { addTileSprite, drawTileRowCentered, TILE_DISPLAY_H, TILE_DISPLAY_W, TILE_GAP } from './tileSprites';
+import { sortTilesByKind, TILE_FRAME_W, TILE_GAP } from '../utils/tiles';
+import { addTileSprite, TILE_DISPLAY_H, TILE_DISPLAY_W } from './tileSprites';
 
 export type BuildBoardCallbacks = {
   onSelectionChanged: () => void;
@@ -123,7 +123,9 @@ export class BuildBoard {
 
     const handY = this.scene.scale.height - 100;
     const waitKinds = resolveWaitKinds(s, submitted, selectedBuildIds, previewWaits);
-    drawWaitRow(this.scene, this.layer, waitKinds, handY - 58);
+    const buttonRowY = this.scene.scale.height - 36;
+    // OK ボタン中心 + 半幅 + 余白（理牌/クリア/OK の右側）
+    const waitsStartX = this.scene.scale.width / 2 + 140 + 58;
 
     const displayHand: TileView[] = submitted
       ? (s.you.hand ?? [])
@@ -192,6 +194,7 @@ export class BuildBoard {
         },
         canOk
       );
+      drawWaitBesideButtons(this.scene, this.layer, waitKinds, waitsStartX, buttonRowY);
     } else if (submitted) {
       this.layer.add(
         this.scene.add
@@ -207,6 +210,7 @@ export class BuildBoard {
           )
           .setOrigin(0.5)
       );
+      drawWaitBesideButtons(this.scene, this.layer, waitKinds, waitsStartX, buttonRowY);
     }
   }
 }
@@ -224,15 +228,31 @@ function resolveWaitKinds(
   return Array.isArray(previewWaits) ? previewWaits : [];
 }
 
-function drawWaitRow(
+function drawWaitBesideButtons(
   scene: Phaser.Scene,
   root: Phaser.GameObjects.Container,
   waitKinds: string[],
-  waitY: number
+  startX: number,
+  y: number,
+  scale = 0.62
 ) {
   if (!Array.isArray(waitKinds) || waitKinds.length === 0) return;
-  const waitTiles: TileView[] = waitKinds.map((kind, i) => ({ id: -3000 - i, kind }));
-  drawTileRowCentered(scene, root, waitTiles, waitY, 0.62);
+  const tw = Math.round(TILE_FRAME_W * scale);
+  const gap = TILE_GAP;
+  root.add(
+    scene.add
+      .text(startX - 4, y, '待ち', {
+        fontFamily: FONT_UI,
+        fontSize: '11px',
+        color: UI_COLOR.muted,
+      })
+      .setOrigin(1, 0.5)
+  );
+  waitKinds.forEach((kind, i) => {
+    const tile: TileView = { id: -3000 - i, kind };
+    const cx = startX + tw / 2 + i * (tw + gap);
+    addTileSprite(scene, root, cx, y, tile, scale);
+  });
 }
 
 function addActionButton(

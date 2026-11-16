@@ -127,6 +127,16 @@ type StatePayload struct {
 	BuildTimerEnabled bool             `json:"buildTimerEnabled"`
 	WallSorted        bool             `json:"wallSorted"`
 	BuildInfinite     bool             `json:"buildInfinite"`
+	// Challenge is set while a guest awaits host approval in LOBBY.
+	Challenge *ChallengeView `json:"challenge,omitempty"`
+}
+
+// ChallengeView is a pending join-request in LOBBY.
+type ChallengeView struct {
+	FromName    string `json:"fromName"`
+	FromSeat    int    `json:"fromSeat"`
+	ExpiresAtMs int64  `json:"expiresAtMs"`
+	Role        string `json:"role"` // "host" | "challenger"
 }
 
 // BuildState builds a viewer-specific snapshot. Caller must hold game lock or guarantee immutability.

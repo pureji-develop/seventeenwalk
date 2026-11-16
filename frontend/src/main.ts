@@ -1,4 +1,5 @@
 import * as Phaser from 'phaser';
+import { registerSW } from 'virtual:pwa-register';
 import './style.css';
 import { GAME_HEIGHT, GAME_WIDTH, UI_COLOR } from './constants/theme';
 import { BootScene } from './scenes/BootScene';
@@ -7,6 +8,9 @@ import { LobbyScene } from './scenes/LobbyScene';
 import { GameScene } from './scenes/GameScene';
 import { CreditScene } from './scenes/CreditScene';
 import { hideBootLoader } from './utils/bootLoader';
+
+// PWA: auto-update service worker (shell / assets). API+WS stay NetworkOnly.
+registerSW({ immediate: true });
 
 const config: Phaser.Types.Core.GameConfig = {
   type: Phaser.AUTO,

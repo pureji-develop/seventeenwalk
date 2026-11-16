@@ -2,12 +2,17 @@
 <html lang="ja">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#0c2e24" />
+    <meta name="description" content="2人用オンライン麻雀バリアント「十七歩」" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="十七歩" />
     <title>十七歩 — SeventeenWalk</title>
     <link rel="icon" href="/favicon.ico" sizes="any" />
     <link rel="icon" type="image/png" href="/favicon-32x32.png" sizes="32x32" />
     <link rel="icon" type="image/png" href="/favicon-16x16.png" sizes="16x16" />
-    <link rel="apple-touch-icon" href="/favicon-48x48.png" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <style>
       html,
       body {
@@ -17,6 +22,9 @@
         background: #0c2e24;
         color: #e8eef4;
         font-family: 'Segoe UI', sans-serif;
+        /* PWA standalone: avoid overscroll bounce */
+        overscroll-behavior: none;
+        touch-action: manipulation;
       }
       #boot-loader {
         position: fixed;
@@ -63,23 +71,6 @@
       <div>十七歩を読み込み中…</div>
     </div>
     <div id="app"></div>
-    <script>
-      (function () {
-        if (!('serviceWorker' in navigator)) return;
-        navigator.serviceWorker.getRegistrations().then(function (regs) {
-          regs.forEach(function (r) {
-            r.unregister();
-          });
-        });
-        if (window.caches && caches.keys) {
-          caches.keys().then(function (keys) {
-            keys.forEach(function (k) {
-              caches.delete(k);
-            });
-          });
-        }
-      })();
-    </script>
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>

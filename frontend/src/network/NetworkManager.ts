@@ -190,6 +190,10 @@ export class NetworkManager {
           }
           case 'error': {
             const err = (message.payload ?? {}) as { message?: string; code?: string };
+            // Denied / kicked: do not auto-reconnect into the same room.
+            if (err.code === 'CHALLENGE_DENIED' || err.code === 'ROOM_FULL' || err.code === 'ROOM_BUSY') {
+              this.intentionalClose = true;
+            }
             this.emit('error', err.message || err.code || 'Unknown error');
             break;
           }

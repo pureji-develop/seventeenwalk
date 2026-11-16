@@ -60,6 +60,14 @@ func newMux(hub *room.Hub) *http.ServeMux {
 			"wallSorted":      cfg.WallSorted,
 		})
 	})
+	mux.HandleFunc("GET /rooms", func(w http.ResponseWriter, r *http.Request) {
+		list := hub.ListPublicRooms()
+		if list == nil {
+			list = []room.PublicRoomInfo{}
+		}
+		w.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(w).Encode(map[string]any{"rooms": list})
+	})
 	mux.HandleFunc("GET /rooms/{id}", func(w http.ResponseWriter, r *http.Request) {
 		id := r.PathValue("id")
 		players, phase, err := hub.Info(id)
@@ -97,9 +105,13 @@ func newMux(hub *room.Hub) *http.ServeMux {
 		}
 		client := ws.NewClient(conn, playerID, roomID, name)
 		if err := rm.Join(client); err != nil {
+			code := "ROOM_FULL"
+			if re, ok := err.(*room.JoinError); ok {
+				code = re.Code
+			}
 			_ = conn.WriteJSON(map[string]any{
-				"type": "error",
-				"payload": map[string]string{"code": "ROOM_FULL", "message": err.Error()},
+				"type":    "error",
+				"payload": map[string]string{"code": code, "message": err.Error()},
 			})
 			_ = conn.Close()
 			return

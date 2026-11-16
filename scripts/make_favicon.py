@@ -17,6 +17,9 @@ ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_SRC = ROOT / "gazou" / "tupai2_1" / "p_ji_c_1.gif"
 DEFAULT_OUT_DIR = ROOT / "frontend" / "public"
 DEFAULT_SIZES = (16, 32, 48)
+PWA_SIZES = (192, 512)
+APPLE_SIZE = 180
+FELT_BG = (12, 46, 36, 255)  # #0c2e24
 
 
 def load_chun(path: Path) -> Image.Image:
@@ -40,6 +43,21 @@ def make_square(tile: Image.Image, size: int, pad_ratio: float = 0.08) -> Image.
     return canvas
 
 
+def make_felt_icon(tile: Image.Image, size: int, pad_ratio: float = 0.18) -> Image.Image:
+    """Felt-green square icon for PWA / home screen (maskable-friendly)."""
+    canvas = Image.new("RGBA", (size, size), FELT_BG)
+    pad = max(0, int(size * pad_ratio))
+    target = size - pad * 2
+    scale = min(target / tile.width, target / tile.height)
+    tw = max(1, int(round(tile.width * scale)))
+    th = max(1, int(round(tile.height * scale)))
+    resized = tile.resize((tw, th), Image.Resampling.LANCZOS)
+    x = (size - tw) // 2
+    y = (size - th) // 2
+    canvas.paste(resized, (x, y), resized)
+    return canvas
+
+
 def write_pngs(tile: Image.Image, out_dir: Path, sizes: list[int]) -> list[Path]:
     out_dir.mkdir(parents=True, exist_ok=True)
     written: list[Path] = []
@@ -51,6 +69,13 @@ def write_pngs(tile: Image.Image, out_dir: Path, sizes: list[int]) -> list[Path]
     primary = out_dir / "favicon.png"
     make_square(tile, 32).save(primary, format="PNG", optimize=True)
     written.append(primary)
+    for s in PWA_SIZES:
+        path = out_dir / f"pwa-{s}x{s}.png"
+        make_felt_icon(tile, s).save(path, format="PNG", optimize=True)
+        written.append(path)
+    apple = out_dir / "apple-touch-icon.png"
+    make_felt_icon(tile, APPLE_SIZE, pad_ratio=0.14).save(apple, format="PNG", optimize=True)
+    written.append(apple)
     return written
 
 

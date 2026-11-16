@@ -24,6 +24,27 @@ export async function createRoom(): Promise<string> {
   return data.roomId;
 }
 
+export interface PublicRoomInfo {
+  roomId: string;
+  hostName: string;
+  players: number;
+  phase: string;
+  totalRounds: number;
+  buildTimeoutSec: number;
+  wallSorted: boolean;
+  open: boolean;
+  busy: boolean;
+}
+
+export async function fetchOpenRooms(): Promise<PublicRoomInfo[]> {
+  const res = await fetch('/rooms');
+  if (!res.ok) {
+    throw new Error(`ルーム一覧の取得に失敗しました (${res.status})`);
+  }
+  const data = (await res.json()) as { rooms?: PublicRoomInfo[] };
+  return Array.isArray(data.rooms) ? data.rooms : [];
+}
+
 export async function fetchRoomInfo(roomId: string): Promise<{ players: number; phase: string }> {
   const res = await fetch(`/rooms/${encodeURIComponent(roomId)}`);
   if (!res.ok) {

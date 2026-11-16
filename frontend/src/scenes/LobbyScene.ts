@@ -54,6 +54,8 @@ export class LobbyScene extends Phaser.Scene {
   private draftRounds: RoundsPreset = 4;
   private draftWallSorted = false;
   private syncingOptions = false;
+  private challengeTick: ReturnType<typeof setInterval> | null = null;
+  private challengeDenied = false;
 
   constructor() {
     super('LobbyScene');
@@ -67,38 +69,56 @@ export class LobbyScene extends Phaser.Scene {
     this.draftPreset = '180';
     this.draftRounds = 4;
     this.draftWallSorted = false;
+    this.challengeDenied = false;
   }
 
   create() {
     this.events.once('shutdown', this.onShutdown, this);
 
     this.overlay = mountMenuOverlay(`
-      <div class="glass-container">
-        <div class="lobby-room-info" id="roomLabel">ROOM: ${this.roomId}</div>
-        <p class="lobby-hint">このルームIDを相手に共有してください（2人対戦）</p>
+      <div class="glass-container lobby-shell">
+        <div class="lobby-layout">
+          <div class="lobby-main">
+            <div class="lobby-room-info" id="roomLabel">ROOM: ${this.roomId}</div>
+            <p class="lobby-hint">このルームIDを相手に共有してください（2人対戦）</p>
+            <div class="input-label" style="text-align:left;margin-bottom:6px;">対戦相手</div>
+            <div class="lobby-players-box" id="playerList">
+              <div style="color:#8a9aab;text-align:center;font-size:0.9rem;">接続中...</div>
+            </div>
+            <div class="lobby-challenge-wait hidden" id="challengeWait">
+              ホストの承認を待っています…
+              <span id="challengeWaitRemain"></span>
+            </div>
+            <div class="lobby-actions-row lobby-actions-primary">
+              <button type="button" class="action-button" id="readyBtn">準備OK</button>
+              <button type="button" class="action-button secondary" id="leaveBtn">退室</button>
+            </div>
+            <button type="button" class="action-button secondary" id="copyBtn">ルームIDをコピー</button>
+          </div>
+          <div class="lobby-side">
+            <div class="lobby-options">
+              <div class="input-label" style="text-align:left;margin-bottom:8px;">局数</div>
+              <div class="lobby-option-row" id="roundsOpts" role="group" aria-label="局数"></div>
 
-        <div class="input-label" style="text-align:left;margin-bottom:6px;">対戦相手</div>
-        <div class="lobby-players-box" id="playerList">
-          <div style="color:#8a9aab;text-align:center;font-size:0.9rem;">接続中...</div>
+              <div class="input-label" style="text-align:left;margin:14px 0 8px;">制限時間</div>
+              <div class="lobby-option-row" id="timeoutOpts" role="group" aria-label="制限時間"></div>
+
+              <div class="input-label" style="text-align:left;margin:14px 0 8px;">山札理牌</div>
+              <div class="lobby-option-row" id="wallSortOpts" role="group" aria-label="山札理牌"></div>
+              <p class="lobby-option-hint">変更すると両者の準備が解除されます</p>
+            </div>
+          </div>
         </div>
-
-        <div class="lobby-options">
-          <div class="input-label" style="text-align:left;margin-bottom:8px;">局数</div>
-          <div class="lobby-option-row" id="roundsOpts" role="group" aria-label="局数"></div>
-
-          <div class="input-label" style="text-align:left;margin:14px 0 8px;">制限時間</div>
-          <div class="lobby-option-row" id="timeoutOpts" role="group" aria-label="制限時間"></div>
-
-          <div class="input-label" style="text-align:left;margin:14px 0 8px;">山札理牌</div>
-          <div class="lobby-option-row" id="wallSortOpts" role="group" aria-label="山札理牌"></div>
-          <p class="lobby-option-hint">変更すると両者の準備が解除されます</p>
+        <div class="challenge-modal hidden" id="challengeModal" role="dialog" aria-modal="true">
+          <div class="challenge-modal-card">
+            <p class="challenge-modal-text" id="challengeModalText"></p>
+            <p class="challenge-modal-timer" id="challengeModalTimer"></p>
+            <div class="lobby-actions-row">
+              <button type="button" class="action-button" id="challengeAcceptBtn">始める</button>
+              <button type="button" class="action-button secondary" id="challengeDeclineBtn">断る</button>
+            </div>
+          </div>
         </div>
-
-        <div class="lobby-actions-row">
-          <button type="button" class="action-button" id="readyBtn">準備OK</button>
-          <button type="button" class="action-button secondary" id="leaveBtn">退室</button>
-        </div>
-        <button type="button" class="action-button secondary" id="copyBtn" style="margin-top:12px;">ルームIDをコピー</button>
       </div>
     `);
 
@@ -111,6 +131,10 @@ export class LobbyScene extends Phaser.Scene {
 
     readyBtn.addEventListener('click', () => {
       if (!this.network?.isOpen) return;
+      if (this.lastState?.challenge) {
+        setOverlayError(this.overlay, '挑戦への応答後に準備できます');
+        return;
+      }
       const next = !(this.lastState?.you.ready ?? false);
       this.network.send('ready', { ready: next });
     });
@@ -130,9 +154,30 @@ export class LobbyScene extends Phaser.Scene {
       }
     });
 
+    const acceptBtn = this.overlay.querySelector('#challengeAcceptBtn') as HTMLButtonElement;
+    const declineBtn = this.overlay.querySelector('#challengeDeclineBtn') as HTMLButtonElement;
+    acceptBtn.addEventListener('click', () => {
+      this.network?.send('respond_challenge', { accept: true });
+    });
+    declineBtn.addEventListener('click', () => {
+      this.network?.send('respond_challenge', { accept: false });
+    });
+
     this.network = new NetworkManager({ roomId: this.roomId, name: this.name });
     this.network.on('state', (state) => this.onState(state));
     this.network.on('error', (msg) => {
+      if (
+        msg.includes('挑戦') ||
+        msg.includes('タイムアウト') ||
+        msg.includes('拒否') ||
+        msg.includes('ROOM_BUSY') ||
+        msg.includes('ROOM_FULL')
+      ) {
+        this.challengeDenied = true;
+        this.network?.close();
+        this.scene.start('LoginScene', { error: msg });
+        return;
+      }
       setOverlayError(this.overlay, msg);
       // 失敗したらサーバ状態に戻す
       if (this.lastState) {
@@ -143,7 +188,7 @@ export class LobbyScene extends Phaser.Scene {
       }
     });
     this.network.on('disconnect', (msg) => {
-      if (!this.handedOffSocket) {
+      if (!this.handedOffSocket && !this.challengeDenied) {
         this.scene.start('LoginScene', { error: msg });
       }
     });
@@ -248,12 +293,15 @@ export class LobbyScene extends Phaser.Scene {
     this.lastState = state;
     this.registry.set('gameState', state);
     this.renderPlayers(state);
+    this.renderChallenge(state);
     setOverlayError(this.overlay, '');
 
     const readyBtn = this.overlay?.querySelector('#readyBtn') as HTMLButtonElement | null;
+    const pending = Boolean(state.challenge);
     if (readyBtn) {
       readyBtn.textContent = state.you.ready ? '準備解除' : '準備OK';
       readyBtn.classList.toggle('ready-on', state.you.ready);
+      readyBtn.disabled = pending;
     }
 
     // Sync options from server (either player can change; both see the same).
@@ -277,6 +325,51 @@ export class LobbyScene extends Phaser.Scene {
 
     if (state.phase && state.phase !== 'LOBBY') {
       this.transitionToGame();
+    }
+  }
+
+  private renderChallenge(state: PublicState) {
+    const modal = this.overlay?.querySelector('#challengeModal') as HTMLElement | null;
+    const wait = this.overlay?.querySelector('#challengeWait') as HTMLElement | null;
+    const text = this.overlay?.querySelector('#challengeModalText') as HTMLElement | null;
+    const ch = state.challenge;
+    if (!ch) {
+      modal?.classList.add('hidden');
+      wait?.classList.add('hidden');
+      this.stopChallengeTick();
+      return;
+    }
+    if (ch.role === 'host') {
+      wait?.classList.add('hidden');
+      modal?.classList.remove('hidden');
+      if (text) {
+        text.textContent = `${ch.fromName}さんから挑戦されました、始めますか？`;
+      }
+    } else {
+      modal?.classList.add('hidden');
+      wait?.classList.remove('hidden');
+    }
+    this.startChallengeTick(ch.expiresAtMs);
+  }
+
+  private startChallengeTick(expiresAtMs: number) {
+    this.stopChallengeTick();
+    const update = () => {
+      const remainSec = Math.max(0, Math.ceil((expiresAtMs - Date.now()) / 1000));
+      const label = `残り ${remainSec} 秒`;
+      const modalTimer = this.overlay?.querySelector('#challengeModalTimer');
+      const waitRemain = this.overlay?.querySelector('#challengeWaitRemain');
+      if (modalTimer) modalTimer.textContent = label;
+      if (waitRemain) waitRemain.textContent = `（${label}）`;
+    };
+    update();
+    this.challengeTick = setInterval(update, 250);
+  }
+
+  private stopChallengeTick() {
+    if (this.challengeTick != null) {
+      clearInterval(this.challengeTick);
+      this.challengeTick = null;
     }
   }
 
@@ -332,6 +425,7 @@ export class LobbyScene extends Phaser.Scene {
   }
 
   private onShutdown() {
+    this.stopChallengeTick();
     unmountMenuOverlay(this.overlay);
     this.overlay = null;
     if (!this.handedOffSocket) {

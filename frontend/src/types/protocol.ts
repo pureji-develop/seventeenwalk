@@ -116,6 +116,16 @@ export interface PublicState {
   wallSorted?: boolean;
   /** 制限時間なし（両者OKまで） */
   buildInfinite?: boolean;
+  /** LOBBY中の挑戦承認待ち（ホスト承認ポップアップ用） */
+  challenge?: ChallengeView | null;
+}
+
+export interface ChallengeView {
+  fromName: string;
+  fromSeat: number;
+  expiresAtMs: number;
+  /** "host" | "challenger" */
+  role: string;
 }
 
 export interface EventPayload {

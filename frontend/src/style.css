@@ -75,7 +75,11 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: max(16px, 3vh) max(16px, 3vw);
+  padding:
+    max(12px, env(safe-area-inset-top, 0px), 2vh)
+    max(12px, env(safe-area-inset-right, 0px), 2vw)
+    max(12px, env(safe-area-inset-bottom, 0px), 2vh)
+    max(12px, env(safe-area-inset-left, 0px), 2vw);
   box-sizing: border-box;
   pointer-events: none;
 }
@@ -83,8 +87,9 @@ body {
 .menu-screen-overlay > .glass-container {
   pointer-events: auto;
   width: min(480px, 100%);
-  max-height: calc(100vh - 32px);
+  max-height: calc(100dvh - 24px);
   overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .glass-container {
@@ -101,6 +106,52 @@ body {
   box-shadow: 0 24px 48px rgba(0, 0, 0, 0.45);
   text-align: center;
   animation: fadeIn 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.login-layout {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.login-actions {
+  display: flex;
+  flex-direction: column;
+}
+
+#copyBtn {
+  margin-top: 12px;
+}
+
+/* Lobby waiting room: default landscape (browser + phone). */
+.menu-screen-overlay > .glass-container.lobby-shell {
+  position: relative;
+  width: min(920px, 100%);
+  max-width: min(920px, 100%);
+  max-height: calc(100dvh - 24px);
+  padding: 22px 26px;
+  text-align: left;
+}
+
+.lobby-layout {
+  display: grid;
+  grid-template-columns: minmax(260px, 1fr) minmax(280px, 1.1fr);
+  gap: 16px 28px;
+  align-items: start;
+  text-align: left;
+}
+
+.lobby-main {
+  min-width: 0;
+}
+
+.lobby-side {
+  min-width: 0;
+}
+
+.lobby-side .lobby-options {
+  height: 100%;
+  margin-bottom: 0;
 }
 
 @keyframes fadeIn {
@@ -308,7 +359,7 @@ body {
 .lobby-hint {
   color: #8a9f94;
   font-size: 0.85rem;
-  margin-bottom: 18px;
+  margin-bottom: 14px;
 }
 
 .lobby-players-box {
@@ -316,9 +367,13 @@ body {
   border: 1px solid rgba(232, 238, 244, 0.1);
   border-radius: 12px;
   padding: 12px;
-  min-height: 96px;
-  margin-bottom: 16px;
+  min-height: 84px;
+  margin-bottom: 14px;
   text-align: left;
+}
+
+.lobby-actions-primary {
+  margin-bottom: 0;
 }
 
 .lobby-player-row {
@@ -389,6 +444,119 @@ body {
   color: #f0a399;
 }
 
+.login-rooms {
+  margin-top: 16px;
+  text-align: left;
+}
+
+.login-rooms-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.login-rooms-list {
+  max-height: 140px;
+  overflow: auto;
+  background: rgba(7, 31, 24, 0.45);
+  border: 1px solid rgba(232, 238, 244, 0.1);
+  border-radius: 12px;
+  padding: 8px;
+}
+
+.login-rooms-empty {
+  color: #8a9f94;
+  font-size: 0.85rem;
+  text-align: center;
+  padding: 14px 8px;
+}
+
+.login-room-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px 6px;
+  border-bottom: 1px solid rgba(232, 238, 244, 0.08);
+}
+
+.login-room-row:last-child {
+  border-bottom: none;
+}
+
+.login-room-id {
+  font-size: 0.82rem;
+  color: #e8eef4;
+  word-break: break-all;
+}
+
+.login-room-sub {
+  font-size: 0.75rem;
+  color: #8a9f94;
+  margin-top: 2px;
+}
+
+.login-room-row .action-button {
+  margin-top: 0;
+  padding: 8px 14px;
+  font-size: 0.85rem;
+  flex-shrink: 0;
+  width: auto;
+}
+
+.lobby-challenge-wait {
+  margin: 0 0 12px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: rgba(226, 91, 74, 0.12);
+  border: 1px solid rgba(226, 91, 74, 0.35);
+  color: #f0a399;
+  font-size: 0.9rem;
+  text-align: center;
+}
+
+.challenge-modal {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(4, 18, 14, 0.72);
+  border-radius: inherit;
+  z-index: 5;
+  padding: 16px;
+}
+
+.challenge-modal.hidden,
+.lobby-challenge-wait.hidden {
+  display: none;
+}
+
+.challenge-modal-card {
+  width: min(360px, 100%);
+  background: rgba(12, 46, 36, 0.96);
+  border: 1px solid rgba(232, 238, 244, 0.14);
+  border-radius: 14px;
+  padding: 20px 18px 16px;
+  text-align: center;
+}
+
+.challenge-modal-text {
+  margin: 0 0 8px;
+  font-family: 'Shippori Mincho', serif;
+  font-size: 1.05rem;
+  color: #e8eef4;
+  line-height: 1.45;
+}
+
+.challenge-modal-timer {
+  margin: 0 0 16px;
+  color: #f0a399;
+  font-size: 0.9rem;
+}
+
 .badge {
   font-size: 0.75rem;
   padding: 3px 8px;
@@ -449,4 +617,204 @@ body {
   font-weight: 600;
   margin-bottom: 4px;
   color: #e8eef4;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Landscape / short-height (phone landscape, PWA standalone, browser)         */
+/* -------------------------------------------------------------------------- */
+@media (orientation: landscape) and (min-width: 700px),
+  (orientation: landscape) and (max-height: 560px),
+  (max-height: 480px) {
+  .menu-screen-overlay > .glass-container.login-shell {
+    width: min(920px, 100%);
+    max-width: min(920px, 100%);
+    max-height: calc(100dvh - 16px);
+    padding: 18px 22px;
+    border-radius: 16px;
+  }
+
+  .menu-screen-overlay > .glass-container.lobby-shell {
+    max-height: calc(100dvh - 16px);
+    padding: 16px 20px;
+    border-radius: 16px;
+  }
+
+  .login-layout {
+    display: grid;
+    grid-template-columns: minmax(220px, 0.95fr) minmax(280px, 1.15fr);
+    gap: 18px 28px;
+    align-items: center;
+    text-align: left;
+  }
+
+  .login-brand {
+    align-self: stretch;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding-right: 8px;
+    border-right: 1px solid rgba(232, 238, 244, 0.1);
+  }
+
+  .login-title-row {
+    flex-wrap: wrap;
+    min-height: 0;
+    margin-bottom: 4px;
+  }
+
+  .login-title-row h1 {
+    font-size: 1.85rem;
+  }
+
+  .login-brand .subtitle {
+    margin-bottom: 0;
+    font-size: 0.85rem;
+  }
+
+  .login-form .input-group {
+    margin-bottom: 10px;
+  }
+
+  .login-form .input-field {
+    padding: 9px 12px;
+    font-size: 0.95rem;
+  }
+
+  .login-actions {
+    display: grid;
+    grid-template-columns: 1.2fr 1fr auto;
+    gap: 8px;
+    align-items: stretch;
+  }
+
+  .login-actions .action-button {
+    margin-top: 0;
+    padding: 10px 12px;
+    font-size: 0.9rem;
+    white-space: nowrap;
+  }
+
+  .login-honor-tiles {
+    justify-content: flex-start;
+  }
+
+  .mh-tile {
+    width: 22px;
+    height: 29px;
+    background-size: calc(9 * 22px) calc(4 * 29px);
+  }
+  .mh-tile[data-kind='ton'] {
+    background-position: calc(0 * -22px) calc(3 * -29px);
+  }
+  .mh-tile[data-kind='nan'] {
+    background-position: calc(1 * -22px) calc(3 * -29px);
+  }
+  .mh-tile[data-kind='sha'] {
+    background-position: calc(2 * -22px) calc(3 * -29px);
+  }
+  .mh-tile[data-kind='pei'] {
+    background-position: calc(3 * -22px) calc(3 * -29px);
+  }
+  .mh-tile[data-kind='haku'] {
+    background-position: calc(4 * -22px) calc(3 * -29px);
+  }
+  .mh-tile[data-kind='hatsu'] {
+    background-position: calc(5 * -22px) calc(3 * -29px);
+  }
+  .mh-tile[data-kind='chun'] {
+    background-position: calc(6 * -22px) calc(3 * -29px);
+  }
+
+  .lobby-room-info {
+    font-size: 1rem;
+    margin-bottom: 4px;
+  }
+
+  .lobby-hint {
+    margin-bottom: 10px;
+    font-size: 0.8rem;
+  }
+
+  .lobby-players-box {
+    min-height: 64px;
+    margin-bottom: 10px;
+    padding: 8px 10px;
+  }
+
+  .lobby-player-row {
+    padding: 5px 4px;
+    font-size: 0.88rem;
+  }
+
+  .lobby-options {
+    padding: 10px;
+  }
+
+  .lobby-options .input-label {
+    margin: 8px 0 6px !important;
+  }
+
+  .lobby-options .input-label:first-child {
+    margin-top: 0 !important;
+  }
+
+  .lobby-option-hint {
+    margin-top: 8px;
+  }
+
+  .lobby-chip {
+    padding: 5px 10px;
+    font-size: 0.78rem;
+  }
+
+  #copyBtn {
+    margin-top: 8px;
+    padding: 10px 12px;
+  }
+
+  .error-message {
+    margin-bottom: 10px;
+    padding: 8px 10px;
+    font-size: 0.85rem;
+  }
+}
+
+/* Lobby: stack only on narrow portrait phones */
+@media (orientation: portrait) and (max-width: 640px) {
+  .menu-screen-overlay > .glass-container.lobby-shell {
+    width: min(480px, 100%);
+    max-width: min(480px, 100%);
+    padding: 28px 22px;
+  }
+
+  .lobby-layout {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+}
+
+/* Very short phones (e.g. iPhone landscape ~360px tall) */
+@media (orientation: landscape) and (max-height: 400px) {
+  .menu-screen-overlay > .glass-container.login-shell,
+  .menu-screen-overlay > .glass-container.lobby-shell {
+    padding: 12px 16px;
+  }
+
+  .login-layout {
+    gap: 12px 18px;
+  }
+
+  .login-title-row h1 {
+    font-size: 1.55rem;
+  }
+
+  .login-actions {
+    grid-template-columns: 1fr 1fr 0.7fr;
+  }
+
+  .login-actions .action-button {
+    padding: 8px 10px;
+    font-size: 0.82rem;
+  }
 }

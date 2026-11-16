@@ -21,6 +21,7 @@ type Room struct {
 	game    *game.Game
 	clients map[string]*ws.Client // playerID → client
 	grace   map[string]*time.Timer
+	challenge *pendingChallenge
 }
 
 func NewRoom(id string, cfg game.MatchConfig) *Room {
@@ -123,6 +124,10 @@ func (r *Room) Join(c *ws.Client) error {
 	if len(r.clients) == 0 && len(r.grace) == 0 && r.game.Phase != game.PhaseLobby {
 		r.resetGameLocked()
 	}
+	hadHost := len(r.clients) == 1 && r.game.Phase == game.PhaseLobby
+	if hadHost && r.challenge != nil {
+		return errRoomBusy
+	}
 	seat, err := r.game.JoinSeat(c.PlayerID, c.Name)
 	if err != nil {
 		return err
@@ -133,9 +138,30 @@ func (r *Room) Join(c *ws.Client) error {
 	r.clients[c.PlayerID] = c
 
 	r.sendWelcomeLocked(c)
+	// Second player in LOBBY → host must approve (1 min).
+	if hadHost {
+		r.startChallengeLocked(seat, c.PlayerID, c.Name)
+		s := seat
+		r.emitEventsLocked([]game.Event{{
+			Kind:  "CHALLENGE_REQUEST",
+			Seat:  &s,
+			Phase: game.PhaseLobby,
+			Extra: map[string]any{
+				"fromName":    c.Name,
+				"expiresAtMs": r.challenge.ExpiresAt.UnixMilli(),
+			},
+		}})
+	}
 	r.broadcastStateLocked()
 	return nil
 }
+
+var errRoomBusy = &JoinError{"ROOM_BUSY", "host is reviewing another challenge"}
+
+// JoinError is returned from Join for HTTP/WS mapping.
+type JoinError struct{ Code, Msg string }
+
+func (e *JoinError) Error() string { return e.Msg }
 
 func (r *Room) sendWelcomeLocked(c *ws.Client) {
 	welcome := protocol.ServerEnvelope{
@@ -164,11 +190,7 @@ func (r *Room) resetGameLocked() {
 	r.attachBuildHook()
 }
 
-var errRoomFull = &roomError{"ROOM_FULL", "room is full"}
-
-type roomError struct{ Code, Msg string }
-
-func (e *roomError) Error() string { return e.Msg }
+var errRoomFull = &JoinError{"ROOM_FULL", "room is full"}
 
 func (r *Room) handleClose(c *ws.Client) {
 	r.mu.Lock()
@@ -184,6 +206,12 @@ func (r *Room) handleClose(c *ws.Client) {
 	c.Seat = -1
 
 	if r.game.Phase == game.PhaseLobby {
+		if r.challenge != nil && r.challenge.ChallengerSeat == seat {
+			r.clearChallengeLocked()
+		} else if r.challenge != nil {
+			// Host left during challenge → deny challenger.
+			r.rejectChallengeLocked("host_left")
+		}
 		_ = r.game.LeaveSeat(seat)
 		r.broadcastStateLocked()
 		return
@@ -247,9 +275,27 @@ func (r *Room) handleRaw(c *ws.Client, data []byte) {
 
 	switch env.Type {
 	case "ready":
+		if r.isChallengerSeat(seat) {
+			r.sendErrorLocked(c, "CHALLENGE_PENDING", "ホストの承認待ちです", env.RequestID)
+			return
+		}
+		if r.challengePending() {
+			r.sendErrorLocked(c, "CHALLENGE_PENDING", "挑戦への応答後に準備できます", env.RequestID)
+			return
+		}
 		var p protocol.ReadyPayload
 		_ = json.Unmarshal(env.Payload, &p)
 		events, err = r.game.ApplyReady(seat, p.Ready)
+	case "respond_challenge", "respondChallenge":
+		var p struct {
+			Accept bool `json:"accept"`
+		}
+		_ = json.Unmarshal(env.Payload, &p)
+		err = r.respondChallengeLocked(seat, p.Accept)
+		if err != nil {
+			break
+		}
+		return // respond already broadcasts
 	case "set_options", "setOptions":
 		var p protocol.SetOptionsPayload
 		if len(env.Payload) > 0 {
@@ -318,6 +364,12 @@ func (r *Room) handleRaw(c *ws.Client, data []byte) {
 	case "leave":
 		if _, ok := r.clients[c.PlayerID]; ok {
 			r.cancelGraceLocked(c.PlayerID)
+			if r.challenge != nil && r.challenge.ChallengerSeat == seat {
+				r.clearChallengeLocked()
+			} else if r.challenge != nil && !r.isChallengerSeat(seat) {
+				// Host leave while challenge pending → kick challenger, then leave.
+				r.rejectChallengeLocked("host_left")
+			}
 			events = r.game.LeaveSeat(seat)
 			delete(r.clients, c.PlayerID)
 			c.Seat = -1
@@ -375,7 +427,16 @@ func (r *Room) sendStateLocked(c *ws.Client, seq int) {
 	if c.Seat < 0 {
 		return
 	}
-	state := protocol.BuildState(r.game, r.ID, game.Seat(c.Seat))
+	viewer := game.Seat(c.Seat)
+	state := protocol.BuildState(r.game, r.ID, viewer)
+	if ch := r.challengeViewFor(viewer); ch != nil {
+		state.Challenge = &protocol.ChallengeView{
+			FromName:    ch.FromName,
+			FromSeat:    ch.FromSeat,
+			ExpiresAtMs: ch.ExpiresAtMs,
+			Role:        ch.Role,
+		}
+	}
 	c.TrySend(protocol.MustEncode(protocol.ServerEnvelope{Type: "state", Seq: seq, Payload: state}))
 }
 

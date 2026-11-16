@@ -99,6 +99,9 @@ func TestRoomReconnectReclaimsSeat(t *testing.T) {
 	}
 	_ = recvMsgs(ca, 300*time.Millisecond)
 	_ = recvMsgs(cb, 300*time.Millisecond)
+	acceptChallenge(t, ca)
+	_ = recvMsgs(ca, 200*time.Millisecond)
+	_ = recvMsgs(cb, 200*time.Millisecond)
 	ca.OnMessage(ca, mustJSON(t, map[string]any{"type": "ready", "payload": map[string]any{"ready": true}}))
 	cb.OnMessage(cb, mustJSON(t, map[string]any{"type": "ready", "payload": map[string]any{"ready": true}}))
 	if r.Phase() != game.PhaseBuild {
@@ -144,6 +147,9 @@ func TestRoomBuildTimeoutForcesWalk(t *testing.T) {
 	}
 	_ = recvMsgs(ca, 300*time.Millisecond)
 	_ = recvMsgs(cb, 300*time.Millisecond)
+	acceptChallenge(t, ca)
+	_ = recvMsgs(ca, 200*time.Millisecond)
+	_ = recvMsgs(cb, 200*time.Millisecond)
 	ca.OnMessage(ca, mustJSON(t, map[string]any{"type": "ready", "payload": map[string]any{"ready": true}}))
 	cb.OnMessage(cb, mustJSON(t, map[string]any{"type": "ready", "payload": map[string]any{"ready": true}}))
 	if r.Phase() != game.PhaseBuild {
@@ -209,6 +215,9 @@ func TestRoomJoinReadySubmitWalk(t *testing.T) {
 	}
 	_ = recvMsgs(ca, 500*time.Millisecond)
 	_ = recvMsgs(cb, 500*time.Millisecond)
+	acceptChallenge(t, ca)
+	_ = recvMsgs(ca, 200*time.Millisecond)
+	_ = recvMsgs(cb, 200*time.Millisecond)
 
 	ca.OnMessage(ca, mustJSON(t, map[string]any{"type": "ready", "payload": map[string]any{"ready": true}}))
 	cb.OnMessage(cb, mustJSON(t, map[string]any{"type": "ready", "payload": map[string]any{"ready": true}}))
@@ -276,6 +285,9 @@ func TestRoomPreviewWaitsAndIllegal(t *testing.T) {
 	_ = r.Join(ca)
 	_ = r.Join(cb)
 	_ = recvMsgs(ca, 500*time.Millisecond)
+	acceptChallenge(t, ca)
+	_ = recvMsgs(ca, 200*time.Millisecond)
+	_ = recvMsgs(cb, 200*time.Millisecond)
 	ca.OnMessage(ca, mustJSON(t, map[string]any{"type": "ready", "payload": map[string]any{"ready": true}}))
 	cb.OnMessage(cb, mustJSON(t, map[string]any{"type": "ready", "payload": map[string]any{"ready": true}}))
 	st := lastState(t, recvMsgs(ca, time.Second))
@@ -320,6 +332,10 @@ func TestRoomFullAndLeaveCleanup(t *testing.T) {
 	if err := r.Join(c2); err != nil {
 		t.Fatal(err)
 	}
+	_ = recvMsgs(c1, 200*time.Millisecond)
+	acceptChallenge(t, c1)
+	_ = recvMsgs(c1, 200*time.Millisecond)
+	_ = recvMsgs(c2, 200*time.Millisecond)
 	if err := r.Join(c3); err == nil {
 		t.Fatal("expected room full")
 	}
@@ -371,6 +387,15 @@ func TestRoomResetWhenRejoiningEmptyMidMatch(t *testing.T) {
 	if r.Phase() != game.PhaseLobby {
 		t.Fatalf("phase=%s want LOBBY after reset", r.Phase())
 	}
+}
+
+// acceptChallenge has the host approve a pending challenger.
+func acceptChallenge(t *testing.T, host *ws.Client) {
+	t.Helper()
+	host.OnMessage(host, mustJSON(t, map[string]any{
+		"type":    "respond_challenge",
+		"payload": map[string]any{"accept": true},
+	}))
 }
 
 func mustJSON(t *testing.T, v any) []byte {

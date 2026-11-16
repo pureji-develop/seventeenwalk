@@ -102,8 +102,6 @@ func TestRoomReconnectReclaimsSeat(t *testing.T) {
 	acceptChallenge(t, ca)
 	_ = recvMsgs(ca, 200*time.Millisecond)
 	_ = recvMsgs(cb, 200*time.Millisecond)
-	ca.OnMessage(ca, mustJSON(t, map[string]any{"type": "ready", "payload": map[string]any{"ready": true}}))
-	cb.OnMessage(cb, mustJSON(t, map[string]any{"type": "ready", "payload": map[string]any{"ready": true}}))
 	if r.Phase() != game.PhaseBuild {
 		t.Fatalf("phase=%s", r.Phase())
 	}
@@ -150,8 +148,6 @@ func TestRoomBuildTimeoutForcesWalk(t *testing.T) {
 	acceptChallenge(t, ca)
 	_ = recvMsgs(ca, 200*time.Millisecond)
 	_ = recvMsgs(cb, 200*time.Millisecond)
-	ca.OnMessage(ca, mustJSON(t, map[string]any{"type": "ready", "payload": map[string]any{"ready": true}}))
-	cb.OnMessage(cb, mustJSON(t, map[string]any{"type": "ready", "payload": map[string]any{"ready": true}}))
 	if r.Phase() != game.PhaseBuild {
 		t.Fatalf("phase=%s", r.Phase())
 	}
@@ -216,17 +212,13 @@ func TestRoomJoinReadySubmitWalk(t *testing.T) {
 	_ = recvMsgs(ca, 500*time.Millisecond)
 	_ = recvMsgs(cb, 500*time.Millisecond)
 	acceptChallenge(t, ca)
-	_ = recvMsgs(ca, 200*time.Millisecond)
-	_ = recvMsgs(cb, 200*time.Millisecond)
-
-	ca.OnMessage(ca, mustJSON(t, map[string]any{"type": "ready", "payload": map[string]any{"ready": true}}))
-	cb.OnMessage(cb, mustJSON(t, map[string]any{"type": "ready", "payload": map[string]any{"ready": true}}))
+	msgsA := recvMsgs(ca, time.Second)
+	msgsB := recvMsgs(cb, time.Second)
 	if r.Phase() != game.PhaseBuild {
 		t.Fatalf("phase=%s", r.Phase())
 	}
-
-	stA := lastState(t, recvMsgs(ca, time.Second))
-	stB := lastState(t, recvMsgs(cb, time.Second))
+	stA := lastState(t, msgsA)
+	stB := lastState(t, msgsB)
 	submitWall(t, ca, stA)
 	submitWall(t, cb, stB)
 	if r.Phase() != game.PhaseWalk {
@@ -286,11 +278,12 @@ func TestRoomPreviewWaitsAndIllegal(t *testing.T) {
 	_ = r.Join(cb)
 	_ = recvMsgs(ca, 500*time.Millisecond)
 	acceptChallenge(t, ca)
-	_ = recvMsgs(ca, 200*time.Millisecond)
+	buildMsgs := recvMsgs(ca, time.Second)
 	_ = recvMsgs(cb, 200*time.Millisecond)
-	ca.OnMessage(ca, mustJSON(t, map[string]any{"type": "ready", "payload": map[string]any{"ready": true}}))
-	cb.OnMessage(cb, mustJSON(t, map[string]any{"type": "ready", "payload": map[string]any{"ready": true}}))
-	st := lastState(t, recvMsgs(ca, time.Second))
+	if r.Phase() != game.PhaseBuild {
+		t.Fatalf("phase=%s", r.Phase())
+	}
+	st := lastState(t, buildMsgs)
 	ids := wallIDsFromState(st)
 	ca.OnMessage(ca, mustJSON(t, map[string]any{"type": "preview_waits", "payload": map[string]any{"tileIds": ids}}))
 	msgs := recvMsgs(ca, time.Second)

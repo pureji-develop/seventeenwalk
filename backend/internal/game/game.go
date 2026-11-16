@@ -241,6 +241,7 @@ func (g *Game) LeaveSeat(seat Seat) []Event {
 }
 
 // ApplyReady toggles ready in LOBBY; starts match when both ready.
+// Prefer StartMatchFromLobby for challenge-accept flow (no ready UI).
 func (g *Game) ApplyReady(seat Seat, ready bool) ([]Event, error) {
 	if g.Phase != PhaseLobby {
 		return nil, ErrIllegalAction
@@ -253,6 +254,19 @@ func (g *Game) ApplyReady(seat Seat, ready bool) ([]Event, error) {
 		return g.startMatch(), nil
 	}
 	return nil, nil
+}
+
+// StartMatchFromLobby begins the match immediately when both seats are filled (no ready gate).
+func (g *Game) StartMatchFromLobby() ([]Event, error) {
+	if g.Phase != PhaseLobby {
+		return nil, ErrIllegalAction
+	}
+	if g.Players[0].ID == "" || g.Players[1].ID == "" {
+		return nil, ErrIllegalAction
+	}
+	g.Players[0].Ready = true
+	g.Players[1].Ready = true
+	return g.startMatch(), nil
 }
 
 func (g *Game) startMatch() []Event {

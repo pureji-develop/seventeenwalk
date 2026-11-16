@@ -1,10 +1,25 @@
 package room
 
 import (
+	"encoding/json"
 	"time"
 
 	"seventeenwalk/internal/game"
 )
+
+// parseAcceptPayload reads { "accept": true|false } from a client payload.
+func parseAcceptPayload(raw json.RawMessage) (accept bool, ok bool) {
+	if len(raw) == 0 {
+		return false, false
+	}
+	var p struct {
+		Accept *bool `json:"accept"`
+	}
+	if err := json.Unmarshal(raw, &p); err != nil || p.Accept == nil {
+		return false, false
+	}
+	return *p.Accept, true
+}
 
 // ChallengeTimeout is how long the host may accept/decline a challenger.
 const ChallengeTimeout = 60 * time.Second
@@ -206,14 +221,20 @@ func (r *Room) respondChallengeLocked(hostSeat game.Seat, accept bool) error {
 		r.rejectChallengeLocked("declined")
 		return nil
 	}
+	// Start first; only then clear challenge so a failed start keeps the prompt.
+	startEv, err := r.game.StartMatchFromLobby()
+	if err != nil {
+		return err
+	}
 	r.clearChallengeLocked()
 	s := ch.ChallengerSeat
 	r.emitEventsLocked([]game.Event{{
 		Kind:  "CHALLENGE_ACCEPTED",
 		Seat:  &s,
-		Phase: game.PhaseLobby,
+		Phase: r.game.Phase,
 		Extra: map[string]any{"fromName": ch.Name},
 	}})
+	r.emitEventsLocked(startEv)
 	r.broadcastStateLocked()
 	return nil
 }
@@ -240,4 +261,23 @@ func (r *Room) challengeViewFor(viewer game.Seat) *ChallengeView {
 
 func (r *Room) isChallengerSeat(seat game.Seat) bool {
 	return r.challenge != nil && r.challenge.ChallengerSeat == seat
+}
+
+func (r *Room) bothSeatsFilledLocked() bool {
+	return r.game.Players[0].ID != "" && r.game.Players[1].ID != ""
+}
+
+// maybeAutoStartLocked starts the match when both seats are filled and no
+// challenge is pending. This recovers the stuck "both entered, still LOBBY" state.
+func (r *Room) maybeAutoStartLocked() bool {
+	if r.game.Phase != game.PhaseLobby || r.challenge != nil || !r.bothSeatsFilledLocked() {
+		return false
+	}
+	ev, err := r.game.StartMatchFromLobby()
+	if err != nil {
+		return false
+	}
+	r.emitEventsLocked(ev)
+	r.broadcastStateLocked()
+	return true
 }

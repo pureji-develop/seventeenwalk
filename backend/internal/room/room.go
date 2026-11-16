@@ -275,27 +275,35 @@ func (r *Room) handleRaw(c *ws.Client, data []byte) {
 
 	switch env.Type {
 	case "ready":
-		if r.isChallengerSeat(seat) {
-			r.sendErrorLocked(c, "CHALLENGE_PENDING", "ホストの承認待ちです", env.RequestID)
-			return
-		}
-		if r.challengePending() {
-			r.sendErrorLocked(c, "CHALLENGE_PENDING", "挑戦への応答後に準備できます", env.RequestID)
-			return
-		}
-		var p protocol.ReadyPayload
-		_ = json.Unmarshal(env.Payload, &p)
-		events, err = r.game.ApplyReady(seat, p.Ready)
+		// Lobby ready is removed; match starts on challenge accept.
+		r.sendErrorLocked(c, "ILLEGAL_ACTION", "準備操作は不要です（ホスト承認で開始します）", env.RequestID)
+		return
 	case "respond_challenge", "respondChallenge":
-		var p struct {
-			Accept bool `json:"accept"`
+		accept, ok := parseAcceptPayload(env.Payload)
+		if !ok {
+			r.sendErrorLocked(c, "INVALID_PAYLOAD", "accept が必要です", env.RequestID)
+			return
 		}
-		_ = json.Unmarshal(env.Payload, &p)
-		err = r.respondChallengeLocked(seat, p.Accept)
+		err = r.respondChallengeLocked(seat, accept)
 		if err != nil {
 			break
 		}
 		return // respond already broadcasts
+	case "start_match", "startMatch":
+		// Idempotent: already in-match → no-op (FE recovery may race accept→BUILD).
+		if r.game.Phase != game.PhaseLobby {
+			return
+		}
+		// Safety valve: both seated in LOBBY with no challenge → start now.
+		if r.challengePending() {
+			r.sendErrorLocked(c, "CHALLENGE_PENDING", "挑戦への応答が必要です", env.RequestID)
+			return
+		}
+		if r.maybeAutoStartLocked() {
+			return
+		}
+		r.sendErrorLocked(c, "ILLEGAL_ACTION", "対局を開始できません", env.RequestID)
+		return
 	case "set_options", "setOptions":
 		var p protocol.SetOptionsPayload
 		if len(env.Payload) > 0 {
@@ -397,6 +405,10 @@ func (r *Room) handleRaw(c *ws.Client, data []byte) {
 	}
 	r.emitEventsLocked(events)
 	r.broadcastStateLocked()
+	// Recover stuck lobby: 2 players, no challenge, still LOBBY.
+	if !closeAfter {
+		_ = r.maybeAutoStartLocked()
+	}
 	if closeAfter {
 		go c.ForceClose()
 	}

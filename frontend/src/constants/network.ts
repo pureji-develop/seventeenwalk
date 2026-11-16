@@ -8,11 +8,24 @@ export function isDevClient(): boolean {
   return import.meta.env.DEV === true;
 }
 
-export async function createRoom(): Promise<string> {
+export type CreateRoomOptions = {
+  totalRounds?: number;
+  /** Finite seconds only; omit or 0 → server default (apply infinite via set_options after join). */
+  buildTimeoutSec?: number;
+};
+
+export async function createRoom(opts: CreateRoomOptions = {}): Promise<string> {
+  const body: Record<string, number> = {};
+  if (opts.totalRounds && opts.totalRounds > 0) {
+    body.totalRounds = opts.totalRounds;
+  }
+  if (opts.buildTimeoutSec && opts.buildTimeoutSec > 0) {
+    body.buildTimeoutSec = opts.buildTimeoutSec;
+  }
   const res = await fetch('/rooms', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: '{}',
+    body: JSON.stringify(body),
   });
   if (!res.ok) {
     throw new Error(`ルーム作成に失敗しました (${res.status})`);

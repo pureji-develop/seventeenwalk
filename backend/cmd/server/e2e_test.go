@@ -56,13 +56,8 @@ func TestWSE2EFlowDrawLeave(t *testing.T) {
 	_ = readUntil(t, a, "welcome")
 	_ = readUntil(t, b, "welcome")
 
-	// Host must accept the challenger before ready.
+	// Host accept starts the match immediately.
 	mustSend(t, a, map[string]any{"type": "respond_challenge", "payload": map[string]any{"accept": true}})
-	_ = readState(t, a)
-	_ = readState(t, b)
-
-	mustSend(t, a, map[string]any{"type": "ready", "payload": map[string]any{"ready": true}})
-	mustSend(t, b, map[string]any{"type": "ready", "payload": map[string]any{"ready": true}})
 
 	stA := readStateUntil(t, a, "BUILD")
 	stB := readStateUntil(t, b, "BUILD")

@@ -92,6 +92,10 @@ body {
   -webkit-overflow-scrolling: touch;
 }
 
+.menu-screen-overlay > .challenge-modal {
+  pointer-events: auto;
+}
+
 .glass-container {
   position: relative;
   z-index: 10;
@@ -111,12 +115,26 @@ body {
 .login-layout {
   display: flex;
   flex-direction: column;
-  gap: 0;
+  align-items: stretch;
+  gap: 8px;
+}
+
+.login-brand {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
 }
 
 .login-actions {
   display: flex;
   flex-direction: column;
+  gap: 10px;
+}
+
+.login-actions .action-button {
+  margin-top: 0;
+  width: 100%;
 }
 
 #copyBtn {
@@ -139,6 +157,10 @@ body {
   gap: 16px 28px;
   align-items: start;
   text-align: left;
+}
+
+.lobby-layout--single {
+  grid-template-columns: 1fr;
 }
 
 .lobby-main {
@@ -176,26 +198,27 @@ body {
 
 .login-title-row {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: flex-start;
-  gap: 14px;
-  margin-bottom: 6px;
-  min-height: 52px;
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: 8px;
+  min-height: 0;
 }
 
 .login-title-row h1 {
   margin-bottom: 0;
   flex-shrink: 0;
-  text-align: left;
+  text-align: center;
   line-height: 1.1;
 }
 
 .login-honor-tiles {
   display: flex;
   align-items: center;
-  justify-content: flex-end;
-  flex: 1;
-  gap: 3px;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 4px;
   min-width: 0;
 }
 
@@ -269,7 +292,18 @@ body {
 .subtitle {
   color: #8a9f94;
   font-size: 0.95rem;
-  margin-bottom: 28px;
+  margin-bottom: 20px;
+}
+
+.login-brand .subtitle {
+  margin-bottom: 4px;
+}
+
+.login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 100%;
 }
 
 .input-group {
@@ -376,6 +410,11 @@ body {
   margin-bottom: 0;
 }
 
+#matchPanel #leaveBtn {
+  margin-top: 0;
+  width: 100%;
+}
+
 .lobby-player-row {
   display: flex;
   justify-content: space-between;
@@ -444,9 +483,37 @@ body {
   color: #f0a399;
 }
 
+.lobby-greeting {
+  font-family: 'Shippori Mincho', serif;
+  font-size: 1.15rem;
+  color: #e8eef4;
+  margin-bottom: 6px;
+}
+
+.lobby-greeting strong {
+  color: #f0a399;
+  font-weight: 600;
+}
+
+#idlePanel {
+  margin-bottom: 14px;
+}
+
+#idlePanel .action-button {
+  margin-top: 0;
+}
+
+.lobby-rooms-block {
+  margin-top: 16px;
+}
+
 .login-rooms {
   margin-top: 16px;
   text-align: left;
+}
+
+.hidden {
+  display: none !important;
 }
 
 .login-rooms-header {
@@ -498,12 +565,137 @@ body {
   margin-top: 2px;
 }
 
+.login-room-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
 .login-room-row .action-button {
   margin-top: 0;
   padding: 8px 14px;
   font-size: 0.85rem;
   flex-shrink: 0;
   width: auto;
+}
+
+.rules-modal-list {
+  list-style: none;
+  margin: 0 0 16px;
+  padding: 0;
+  text-align: left;
+}
+
+.rules-modal-list li {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(232, 238, 244, 0.1);
+  font-size: 0.95rem;
+  color: #e8eef4;
+}
+
+.rules-modal-list li:last-child {
+  border-bottom: none;
+}
+
+.rules-modal-list li span:first-child {
+  color: #8a9f94;
+}
+
+#rulesOkBtn {
+  margin-top: 0;
+  width: 100%;
+}
+
+/* Full-screen modals sit on the overlay (sibling of lobby-shell), never scroll. */
+.challenge-modal.host-rules-modal {
+  position: fixed;
+  inset: 0;
+  border-radius: 0;
+  z-index: 40;
+  padding: 20px 16px;
+  overflow: hidden;
+  align-items: center;
+  justify-content: center;
+}
+
+.host-rules-card {
+  width: min(440px, 100%);
+  max-width: 100%;
+  max-height: none;
+  padding: 24px 22px 20px;
+  text-align: left;
+  overflow: visible;
+  flex-shrink: 0;
+}
+
+.host-rules-options {
+  margin-bottom: 0;
+  background: transparent;
+  border: none;
+  padding: 0;
+}
+
+.host-rules-options .input-label {
+  text-align: left;
+  margin: 12px 0 6px;
+  font-size: 0.88rem;
+}
+
+.host-rules-options .input-label:first-child {
+  margin-top: 0;
+}
+
+.host-rules-options .lobby-option-row {
+  gap: 6px;
+}
+
+.host-rules-options .lobby-chip {
+  padding: 6px 11px;
+  font-size: 0.8rem;
+}
+
+.host-rules-actions {
+  margin-top: 18px;
+}
+
+.host-rules-actions .action-button {
+  margin-top: 0;
+  white-space: nowrap;
+  padding: 12px 14px;
+  font-size: 0.95rem;
+}
+
+@media (max-height: 520px) {
+  .challenge-modal.host-rules-modal {
+    padding: 12px 12px;
+  }
+
+  .host-rules-card {
+    padding: 16px 16px 14px;
+  }
+
+  .host-rules-options .input-label {
+    margin: 8px 0 4px;
+    font-size: 0.8rem;
+  }
+
+  .host-rules-options .lobby-chip {
+    padding: 5px 9px;
+    font-size: 0.75rem;
+  }
+
+  .host-rules-actions {
+    margin-top: 12px;
+  }
+
+  .host-rules-actions .action-button {
+    padding: 10px 12px;
+    font-size: 0.9rem;
+  }
 }
 
 .lobby-challenge-wait {
@@ -625,11 +817,12 @@ body {
 @media (orientation: landscape) and (min-width: 700px),
   (orientation: landscape) and (max-height: 560px),
   (max-height: 480px) {
+  /* Login stays a centered vertical stack; only tighten spacing for short viewports. */
   .menu-screen-overlay > .glass-container.login-shell {
-    width: min(920px, 100%);
-    max-width: min(920px, 100%);
+    width: min(420px, 100%);
+    max-width: min(420px, 100%);
     max-height: calc(100dvh - 16px);
-    padding: 18px 22px;
+    padding: 16px 20px;
     border-radius: 16px;
   }
 
@@ -640,25 +833,11 @@ body {
   }
 
   .login-layout {
-    display: grid;
-    grid-template-columns: minmax(220px, 0.95fr) minmax(280px, 1.15fr);
-    gap: 18px 28px;
-    align-items: center;
-    text-align: left;
-  }
-
-  .login-brand {
-    align-self: stretch;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    padding-right: 8px;
-    border-right: 1px solid rgba(232, 238, 244, 0.1);
+    gap: 4px;
   }
 
   .login-title-row {
-    flex-wrap: wrap;
-    min-height: 0;
+    gap: 8px;
     margin-bottom: 4px;
   }
 
@@ -672,7 +851,7 @@ body {
   }
 
   .login-form .input-group {
-    margin-bottom: 10px;
+    margin-bottom: 8px;
   }
 
   .login-form .input-field {
@@ -681,21 +860,12 @@ body {
   }
 
   .login-actions {
-    display: grid;
-    grid-template-columns: 1.2fr 1fr auto;
     gap: 8px;
-    align-items: stretch;
   }
 
   .login-actions .action-button {
-    margin-top: 0;
     padding: 10px 12px;
     font-size: 0.9rem;
-    white-space: nowrap;
-  }
-
-  .login-honor-tiles {
-    justify-content: flex-start;
   }
 
   .mh-tile {
@@ -802,7 +972,12 @@ body {
   }
 
   .login-layout {
-    gap: 12px 18px;
+    gap: 2px;
+  }
+
+  .login-title-row {
+    gap: 6px;
+    margin-bottom: 2px;
   }
 
   .login-title-row h1 {
@@ -810,7 +985,7 @@ body {
   }
 
   .login-actions {
-    grid-template-columns: 1fr 1fr 0.7fr;
+    gap: 6px;
   }
 
   .login-actions .action-button {

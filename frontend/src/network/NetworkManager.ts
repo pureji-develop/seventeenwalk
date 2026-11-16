@@ -23,6 +23,18 @@ type Handler<T> = (payload: T) => void;
 const MAX_RECONNECT = 8;
 const RECONNECT_BASE_MS = 600;
 
+export type NetworkManagerOpts = {
+  socket?: WebSocket;
+  roomId: string;
+  name: string;
+  /**
+   * - omit: load from sessionStorage (mid-match reconnect)
+   * - null: fresh join (never reuse another tab's seat)
+   * - string: explicit id (Lobby → Game handoff)
+   */
+  playerId?: string | null;
+};
+
 /**
  * WebSocket layer: connect / send / event fan-out / auto-reconnect.
  * Lobby may hand off an open socket to GameScene.
@@ -37,6 +49,8 @@ export class NetworkManager {
   private reconnectAttempt = 0;
   private reconnectTimer: ReturnType<typeof setTimeout> | null = null;
   private handedOff = false;
+  /** True after welcome — only then do we auto-reconnect on drop. */
+  private sessionReady = false;
 
   private listeners: { [K in keyof NetworkEventMap]: Handler<NetworkEventMap[K]>[] } = {
     welcome: [],
@@ -48,12 +62,17 @@ export class NetworkManager {
     disconnect: [],
   };
 
-  constructor(opts: { socket?: WebSocket; roomId: string; name: string; playerId?: string | null }) {
+  constructor(opts: NetworkManagerOpts) {
     this.roomId = opts.roomId;
     this.name = opts.name;
-    this.playerId = opts.playerId ?? loadStoredPlayerId(opts.roomId);
+    if (opts.playerId === undefined) {
+      this.playerId = loadStoredPlayerId(opts.roomId);
+    } else {
+      this.playerId = opts.playerId;
+    }
     if (opts.socket) {
       this.socket = opts.socket;
+      this.sessionReady = true;
       this.bindSocket(opts.socket);
     }
   }
@@ -62,10 +81,35 @@ export class NetworkManager {
     this.intentionalClose = false;
     this.handedOff = false;
     this.clearReconnectTimer();
+    // Drop previous socket handlers so a late onclose cannot schedule another reconnect.
+    if (this.socket) {
+      this.socket.onmessage = null;
+      this.socket.onopen = null;
+      this.socket.onclose = null;
+      this.socket.onerror = null;
+      if (
+        this.socket.readyState === WebSocket.OPEN ||
+        this.socket.readyState === WebSocket.CONNECTING
+      ) {
+        this.socket.close();
+      }
+      this.socket = null;
+    }
     const url = buildGameWsUrl(this.roomId, this.name, this.playerId);
     const socket = new WebSocket(url);
     this.socket = socket;
     this.bindSocket(socket);
+  }
+
+  /** Switch to another room with a brand-new player identity. */
+  switchRoom(roomId: string): void {
+    this.close();
+    this.roomId = roomId;
+    this.playerId = null;
+    this.lastSeq = 0;
+    this.sessionReady = false;
+    this.reconnectAttempt = 0;
+    this.connect();
   }
 
   /** Detach handlers without closing — for Lobby → Game handoff. */
@@ -88,12 +132,23 @@ export class NetworkManager {
     return this.playerId;
   }
 
+  getRoomId(): string {
+    return this.roomId;
+  }
+
   close(): void {
     this.intentionalClose = true;
     this.clearReconnectTimer();
     clearStoredPlayerId(this.roomId);
-    this.socket?.close();
-    this.socket = null;
+    if (this.socket) {
+      this.socket.onmessage = null;
+      this.socket.onopen = null;
+      this.socket.onclose = null;
+      this.socket.onerror = null;
+      this.socket.close();
+      this.socket = null;
+    }
+    this.sessionReady = false;
   }
 
   on<K extends keyof NetworkEventMap>(event: K, handler: Handler<NetworkEventMap[K]>): void {
@@ -170,6 +225,7 @@ export class NetworkManager {
               this.playerId = welcome.playerId;
               storePlayerId(this.roomId, welcome.playerId);
             }
+            this.sessionReady = true;
             this.emit('welcome', welcome);
             break;
           }
@@ -191,8 +247,13 @@ export class NetworkManager {
           case 'error': {
             const err = (message.payload ?? {}) as { message?: string; code?: string };
             // Denied / kicked: do not auto-reconnect into the same room.
-            if (err.code === 'CHALLENGE_DENIED' || err.code === 'ROOM_FULL' || err.code === 'ROOM_BUSY') {
+            if (
+              err.code === 'CHALLENGE_DENIED' ||
+              err.code === 'ROOM_FULL' ||
+              err.code === 'ROOM_BUSY'
+            ) {
               this.intentionalClose = true;
+              this.sessionReady = false;
             }
             this.emit('error', err.message || err.code || 'Unknown error');
             break;
@@ -209,7 +270,14 @@ export class NetworkManager {
 
     socket.onclose = () => {
       if (this.intentionalClose || this.handedOff) return;
-      this.socket = null;
+      if (this.socket === socket) {
+        this.socket = null;
+      }
+      // Initial handshake failed (404 / proxy / etc.) — don't spin "再接続中".
+      if (!this.sessionReady) {
+        this.emit('disconnect', 'サーバーに接続できませんでした');
+        return;
+      }
       this.scheduleReconnect();
     };
 

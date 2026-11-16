@@ -26,6 +26,8 @@ interface GameSceneData {
   name: string;
   roomId: string;
   playerId?: string | null;
+  /** Snapshot at handoff so we don't rely only on registry. */
+  initialState?: PublicState | null;
 }
 
 export class GameScene extends Phaser.Scene {
@@ -73,14 +75,23 @@ export class GameScene extends Phaser.Scene {
     this.previewWaits = [];
     this.previewWaitsKey = '';
     this.wallFlipById.clear();
-    this.state = (this.registry.get('gameState') as PublicState) || null;
+    this.roundIntroDone = false;
+    this.lastPhase = '';
+    const handed = data.initialState ?? null;
+    if (handed) {
+      this.registry.set('gameState', handed);
+      this.state = handed;
+    } else {
+      this.state = (this.registry.get('gameState') as PublicState) || null;
+    }
     this.buildBoard = null;
 
     this.network = new NetworkManager({
       socket: data.socket ?? undefined,
       roomId: data.roomId,
       name: data.name,
-      playerId: data.playerId,
+      // Prefer handoff id; otherwise sessionStorage for mid-match reload.
+      playerId: data.playerId === undefined ? undefined : data.playerId,
     });
     if (!data.socket) {
       this.network.connect();

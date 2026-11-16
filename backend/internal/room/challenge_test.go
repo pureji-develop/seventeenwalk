@@ -36,21 +36,21 @@ func TestChallengeAcceptDeclineAndList(t *testing.T) {
 		t.Fatalf("busy listing %#v", info)
 	}
 
-	// Challenger cannot ready while pending.
+	// Lobby ready is disabled (match starts on host accept).
 	cb.OnMessage(cb, mustJSON(t, map[string]any{"type": "ready", "payload": map[string]any{"ready": true}}))
 	errMsgs := recvMsgs(cb, 300*time.Millisecond)
-	foundPending := false
+	foundReject := false
 	for _, m := range errMsgs {
 		if m["type"] != "error" {
 			continue
 		}
 		p, _ := m["payload"].(map[string]any)
-		if p["code"] == "CHALLENGE_PENDING" {
-			foundPending = true
+		if p["code"] == "ILLEGAL_ACTION" {
+			foundReject = true
 		}
 	}
-	if !foundPending {
-		t.Fatalf("expected CHALLENGE_PENDING, got %#v", errMsgs)
+	if !foundReject {
+		t.Fatalf("expected ready to be rejected, got %#v", errMsgs)
 	}
 
 	// Decline → challenger kicked, room open again.
@@ -86,21 +86,14 @@ func TestChallengeAcceptDeclineAndList(t *testing.T) {
 	if r.challenge != nil {
 		t.Fatal("challenge should clear on accept")
 	}
-	if r.Phase() != game.PhaseLobby {
-		t.Fatalf("phase=%s", r.Phase())
+	if r.Phase() != game.PhaseBuild {
+		t.Fatalf("phase=%s want BUILD after accept", r.Phase())
 	}
 	list := h.ListPublicRooms()
-	found := false
 	for _, row := range list {
 		if row.RoomID == r.ID {
-			found = true
-			if row.Open || row.Busy {
-				t.Fatalf("full lobby should not be open/busy %#v", row)
-			}
+			t.Fatalf("in-match room should not appear in lobby list %#v", row)
 		}
-	}
-	if !found {
-		t.Fatal("room missing from list")
 	}
 }
 

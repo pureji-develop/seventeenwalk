@@ -1,7 +1,15 @@
 import * as Phaser from 'phaser';
 import { NetworkManager } from '../network/NetworkManager';
 import type { EventPayload, PublicState, TileView } from '../types/protocol';
-import { FONT_DISPLAY, FONT_UI, PHASER_COLOR, UI_COLOR } from '../constants/theme';
+import {
+  FONT_DISPLAY,
+  FONT_UI,
+  PHASER_COLOR,
+  TILE_SIZE_SCALE,
+  UI_COLOR,
+  uiFont,
+  uiSpace,
+} from '../constants/theme';
 import {
   buildYakuRows,
   formatLimit,
@@ -107,25 +115,25 @@ export class GameScene extends Phaser.Scene {
     this.buildBoard = new BuildBoard(this, this.root);
 
     this.toastText = this.add
-      .text(this.scale.width / 2, 28, '', {
+      .text(this.scale.width / 2, uiSpace(20), '', {
         fontFamily: FONT_UI,
-        fontSize: '18px',
+        fontSize: uiFont(18),
         color: UI_COLOR.gold,
         backgroundColor: '#071f18cc',
-        padding: { x: 14, y: 8 },
+        padding: { x: uiSpace(12), y: uiSpace(6) },
       })
       .setOrigin(0.5, 0)
       .setDepth(20)
       .setAlpha(0);
 
     this.buildTimerText = this.add
-      .text(this.scale.width / 2, 78, '', {
+      .text(this.scale.width / 2, uiSpace(72), '', {
         fontFamily: FONT_UI,
-        fontSize: '15px',
+        fontSize: uiFont(15),
         fontStyle: 'bold',
         color: UI_COLOR.gold,
         backgroundColor: '#071f18aa',
-        padding: { x: 12, y: 5 },
+        padding: { x: uiSpace(10), y: uiSpace(4) },
       })
       .setOrigin(0.5, 0)
       .setDepth(19)
@@ -450,7 +458,7 @@ export class GameScene extends Phaser.Scene {
         this.add
           .text(this.scale.width / 2, this.scale.height / 2, '状態を待っています…', {
             fontFamily: FONT_UI,
-            fontSize: '20px',
+            fontSize: uiFont(20),
             color: UI_COLOR.ivory,
           })
           .setOrigin(0.5)
@@ -467,7 +475,7 @@ export class GameScene extends Phaser.Scene {
           this.add
             .text(this.scale.width / 2, this.scale.height / 2, 'ドラ選定中…', {
               fontFamily: FONT_UI,
-              fontSize: '18px',
+              fontSize: uiFont(18),
               color: UI_COLOR.muted,
             })
             .setOrigin(0.5)
@@ -504,7 +512,7 @@ export class GameScene extends Phaser.Scene {
           this.add
             .text(this.scale.width / 2, this.scale.height / 2, `phase: ${s.phase}`, {
               fontFamily: FONT_UI,
-              fontSize: '18px',
+              fontSize: uiFont(18),
               color: UI_COLOR.muted,
             })
             .setOrigin(0.5)
@@ -517,24 +525,29 @@ export class GameScene extends Phaser.Scene {
     const oppScore = s.scores[s.opponent.seat] ?? 0;
 
     // 左上: ドラ表示牌のみ
-    let headerLeft = 24;
+    let headerLeft = uiSpace(18);
     if (s.doraIndicator) {
       this.root.add(
-        this.add.text(headerLeft, 12, 'ドラ', {
+        this.add.text(headerLeft, uiSpace(8), 'ドラ', {
           fontFamily: FONT_UI,
-          fontSize: '11px',
+          fontSize: uiFont(11),
           color: UI_COLOR.muted,
         })
       );
-      this.addTileSprite(headerLeft + 24, 52, s.doraIndicator, 0.72).setOrigin(0.5);
-      headerLeft = 96;
+      this.addTileSprite(
+        headerLeft + uiSpace(22),
+        uiSpace(40),
+        s.doraIndicator,
+        0.72 * TILE_SIZE_SCALE
+      ).setOrigin(0.5);
+      headerLeft = uiSpace(78);
     }
 
     this.root.add(
       this.add
-        .text(headerLeft, 12, '十七歩', {
+        .text(headerLeft, uiSpace(8), '十七歩', {
           fontFamily: FONT_DISPLAY,
-          fontSize: '20px',
+          fontSize: uiFont(20),
           color: UI_COLOR.ivory,
         })
         .setOrigin(0, 0)
@@ -542,11 +555,11 @@ export class GameScene extends Phaser.Scene {
     this.root.add(
       this.add.text(
         headerLeft,
-        38,
+        uiSpace(36),
         `${this.name} · ${this.roomId} · 第${s.round}/${s.totalRounds}局  ${this.phaseLabel(s)}`,
         {
           fontFamily: FONT_UI,
-          fontSize: '12px',
+          fontSize: uiFont(12),
           color: UI_COLOR.muted,
         }
       )
@@ -557,12 +570,12 @@ export class GameScene extends Phaser.Scene {
     if (s.you.agariAbandoned) {
       this.root.add(
         this.add
-          .text(this.scale.width / 2, 16, 'あがり放棄中（全待ち）', {
+          .text(this.scale.width / 2, uiSpace(12), 'あがり放棄中（全待ち）', {
             fontFamily: FONT_UI,
-            fontSize: '13px',
+            fontSize: uiFont(13),
             color: UI_COLOR.accentSoft,
             backgroundColor: '#3a1820aa',
-            padding: { x: 10, y: 4 },
+            padding: { x: uiSpace(8), y: uiSpace(3) },
           })
           .setOrigin(0.5, 0)
       );
@@ -570,12 +583,12 @@ export class GameScene extends Phaser.Scene {
     if (s.opponent?.name && s.opponent.connected === false) {
       this.root.add(
         this.add
-          .text(this.scale.width / 2, 48, '相手の再接続を待っています…', {
+          .text(this.scale.width / 2, uiSpace(44), '相手の再接続を待っています…', {
             fontFamily: FONT_UI,
-            fontSize: '14px',
+            fontSize: uiFont(14),
             color: UI_COLOR.gold,
             backgroundColor: '#071f18cc',
-            padding: { x: 12, y: 6 },
+            padding: { x: uiSpace(10), y: uiSpace(4) },
           })
           .setOrigin(0.5, 0)
       );
@@ -589,28 +602,28 @@ export class GameScene extends Phaser.Scene {
     youScore: number,
     oppScore: number
   ) {
-    const marginRight = 24;
-    const dashGap = 8;
-    const padX = 10;
-    const padY = 5;
-    const innerGap = 2;
-    const topY = 12;
+    const marginRight = uiSpace(18);
+    const dashGap = uiSpace(6);
+    const padX = uiSpace(8);
+    const padY = uiSpace(4);
+    const innerGap = uiSpace(2);
+    const topY = uiSpace(8);
     const dashChar = '—';
 
     const nameStyle: Phaser.Types.GameObjects.Text.TextStyle = {
       fontFamily: FONT_UI,
-      fontSize: '13px',
+      fontSize: uiFont(13),
       color: UI_COLOR.ivory,
     };
     const scoreStyle: Phaser.Types.GameObjects.Text.TextStyle = {
       fontFamily: FONT_UI,
-      fontSize: '14px',
+      fontSize: uiFont(14),
       fontStyle: 'bold',
       color: UI_COLOR.gold,
     };
     const dashStyle: Phaser.Types.GameObjects.Text.TextStyle = {
       fontFamily: FONT_UI,
-      fontSize: '13px',
+      fontSize: uiFont(13),
       color: UI_COLOR.muted,
     };
 
@@ -694,28 +707,30 @@ export class GameScene extends Phaser.Scene {
     this.root.add(dim);
 
     const panel = this.add.graphics();
+    const pw = uiSpace(320);
+    const ph = uiSpace(120);
     panel.fillStyle(PHASER_COLOR.panel, 0.95);
-    panel.fillRoundedRect(cx - 200, cy - 70, 400, 140, 16);
+    panel.fillRoundedRect(cx - pw / 2, cy - ph / 2, pw, ph, 16);
     panel.lineStyle(1, 0xe8eef4, 0.14);
-    panel.strokeRoundedRect(cx - 200, cy - 70, 400, 140, 16);
+    panel.strokeRoundedRect(cx - pw / 2, cy - ph / 2, pw, ph, 16);
     this.root.add(panel);
 
     const n = s.round ?? 1;
     const m = s.totalRounds ?? 4;
     this.root.add(
       this.add
-        .text(cx, cy - 8, `${n}局目`, {
+        .text(cx, cy - uiSpace(10), `${n}局目`, {
           fontFamily: FONT_DISPLAY,
-          fontSize: '42px',
+          fontSize: uiFont(42),
           color: UI_COLOR.ivory,
         })
         .setOrigin(0.5)
     );
     this.root.add(
       this.add
-        .text(cx, cy + 36, `（全${m}局）`, {
+        .text(cx, cy + uiSpace(28), `（全${m}局）`, {
           fontFamily: FONT_UI,
-          fontSize: '18px',
+          fontSize: uiFont(18),
           color: UI_COLOR.gold,
         })
         .setOrigin(0.5)
@@ -748,23 +763,24 @@ export class GameScene extends Phaser.Scene {
     const legal = new Set(s.walk?.legalTileIds ?? []);
     const w = this.scale.width;
     const h = this.scale.height;
-    const riverScale = 0.66;
-    const oppHandScale = 0.62;
+    const riverScale = 0.66 * TILE_SIZE_SCALE;
+    const oppHandScale = 0.62 * TILE_SIZE_SCALE;
+    const handScale = 0.78 * TILE_SIZE_SCALE;
     const riverTh = Math.round(TILE_FRAME_H * riverScale);
     const oppHandTh = Math.round(TILE_FRAME_H * oppHandScale);
 
     this.root.add(
       this.add
-        .text(w / 2, 78, myTurn ? 'あなたの番 — 捨て候補から打牌' : '相手の番…', {
+        .text(w / 2, uiSpace(70), myTurn ? 'あなたの番 — 捨て候補から打牌' : '相手の番…', {
           fontFamily: FONT_UI,
-          fontSize: '15px',
+          fontSize: uiFont(15),
           color: myTurn ? UI_COLOR.accentSoft : UI_COLOR.muted,
         })
         .setOrigin(0.5)
     );
 
     // --- 上段: 相手手牌（ラベルなし） ---
-    const oppHandY = 108;
+    const oppHandY = uiSpace(100);
     const oppRevealed = s.opponent.hand && s.opponent.hand.length > 0;
     if (oppRevealed) {
       this.drawTileRowCentered(sortTilesByKind(s.opponent.hand!), oppHandY, oppHandScale);
@@ -773,14 +789,14 @@ export class GameScene extends Phaser.Scene {
     }
 
     // --- 下段: 捨て候補 → 手牌 ---
-    const handY = h - 48;
-    const poolRowGap = TILE_DISPLAY_H + 8;
-    const poolBottomY = handY - 72;
+    const handY = h - uiSpace(42);
+    const poolRowGap = TILE_DISPLAY_H + uiSpace(6);
+    const poolBottomY = handY - uiSpace(64);
     const poolTopY = poolBottomY - poolRowGap;
 
     // --- 中央: 河を相手手牌〜捨て候補のあいだで上下中央揃え ---
     const riverBlock = this.riverBlockHeight(riverScale);
-    const riverGap = 14;
+    const riverGap = uiSpace(10);
     const riverPairH = riverBlock * 2 + riverGap;
     const zoneTop = oppHandY + oppHandTh / 2;
     const zoneBottom = poolTopY - TILE_DISPLAY_H / 2;
@@ -804,8 +820,11 @@ export class GameScene extends Phaser.Scene {
     this.drawPoolRow(row2, poolBottomY, myTurn, legal);
 
     const waitKinds = Array.isArray(s.you.waits) ? s.you.waits : [];
-    drawWaitBottomRight(this, this.root, waitKinds, { y: h - 36 });
-    this.drawTileRowCentered(sortTilesByKind(s.you.hand ?? []), handY, 0.78);
+    drawWaitBottomRight(this, this.root, waitKinds, {
+      y: h - uiSpace(28),
+      scale: 0.62 * TILE_SIZE_SCALE,
+    });
+    this.drawTileRowCentered(sortTilesByKind(s.you.hand ?? []), handY, handScale);
   }
 
   private drawPoolRow(
@@ -840,21 +859,22 @@ export class GameScene extends Phaser.Scene {
    */
   private drawRonHold(s: PublicState) {
     const h = this.scale.height;
-    const riverScale = 0.66;
-    const oppHandScale = 0.62;
+    const riverScale = 0.66 * TILE_SIZE_SCALE;
+    const oppHandScale = 0.62 * TILE_SIZE_SCALE;
+    const handScale = 0.78 * TILE_SIZE_SCALE;
     const riverTh = Math.round(TILE_FRAME_H * riverScale);
     const oppHandTh = Math.round(TILE_FRAME_H * oppHandScale);
 
-    const oppHandY = 108;
+    const oppHandY = uiSpace(100);
     this.drawFaceDownRow(Math.max(s.opponent.handCount, 13), oppHandY, oppHandScale);
 
-    const handY = h - 48;
-    const poolRowGap = TILE_DISPLAY_H + 8;
-    const poolBottomY = handY - 72;
+    const handY = h - uiSpace(42);
+    const poolRowGap = TILE_DISPLAY_H + uiSpace(6);
+    const poolBottomY = handY - uiSpace(64);
     const poolTopY = poolBottomY - poolRowGap;
 
     const riverBlock = this.riverBlockHeight(riverScale);
-    const riverGap = 14;
+    const riverGap = uiSpace(10);
     const riverPairH = riverBlock * 2 + riverGap;
     const zoneTop = oppHandY + oppHandTh / 2;
     const zoneBottom = poolTopY - TILE_DISPLAY_H / 2;
@@ -877,7 +897,7 @@ export class GameScene extends Phaser.Scene {
     this.drawPoolRow(row1, poolTopY, false, new Set());
     this.drawPoolRow(row2, poolBottomY, false, new Set());
 
-    this.drawTileRowCentered(sortTilesByKind(s.you.hand ?? []), handY, 0.78);
+    this.drawTileRowCentered(sortTilesByKind(s.you.hand ?? []), handY, handScale);
   }
 
   private drawRonSplash() {
@@ -891,7 +911,7 @@ export class GameScene extends Phaser.Scene {
     const label = this.add
       .text(cx, cy, 'ロン', {
         fontFamily: FONT_DISPLAY,
-        fontSize: '120px',
+        fontSize: uiFont(120),
         color: '#c45a4a',
       })
       .setOrigin(0.5)
@@ -924,7 +944,7 @@ export class GameScene extends Phaser.Scene {
       const label = this.add
         .text(cx, cy, '流局', {
           fontFamily: FONT_DISPLAY,
-          fontSize: '120px',
+          fontSize: uiFont(120),
           color: '#9aa8b8',
         })
         .setOrigin(0.5)
@@ -941,7 +961,7 @@ export class GameScene extends Phaser.Scene {
         this.add
           .text(cx, 88, '流局', {
             fontFamily: FONT_DISPLAY,
-            fontSize: '28px',
+            fontSize: uiFont(28),
             color: UI_COLOR.ivory,
           })
           .setOrigin(0.5)
@@ -968,7 +988,7 @@ export class GameScene extends Phaser.Scene {
       this.add
         .text(this.scale.width / 2, 88, 'ロン', {
           fontFamily: FONT_DISPLAY,
-          fontSize: '22px',
+          fontSize: uiFont(22),
           color: '#c45a4a',
         })
         .setOrigin(0.5)
@@ -991,14 +1011,14 @@ export class GameScene extends Phaser.Scene {
   /** 局終了時の盤面開示レイアウト（流局 / ロン peek 共通） */
   private drawEndBoardReveal(s: PublicState) {
     const h = this.scale.height;
-    const scaleSmall = 0.55;
-    const riverScale = 0.62;
+    const scaleSmall = 0.55 * TILE_SIZE_SCALE;
+    const riverScale = 0.62 * TILE_SIZE_SCALE;
     const riverTh = Math.round(TILE_FRAME_H * riverScale);
     const rr = s.roundResult;
     const winId = rr?.result === 'RON' ? rr.winningTile?.id : undefined;
     const loserSeat = rr?.result === 'RON' ? rr.loserSeat : undefined;
 
-    const oppHandY = 100;
+    const oppHandY = uiSpace(90);
     let oppHand = s.opponent.hand?.length ? s.opponent.hand : [];
     if (
       !oppHand.length &&
@@ -1014,21 +1034,21 @@ export class GameScene extends Phaser.Scene {
       this.drawFaceDownRow(Math.max(s.opponent.handCount, 13), oppHandY, scaleSmall);
     }
 
-    const oppPoolY = oppHandY + 36;
+    const oppPoolY = oppHandY + uiSpace(32);
     const oppPool = sortTilesByKind(s.opponent.pool ?? []);
     if (oppPool.length) {
-      this.drawTileRowCentered(oppPool, oppPoolY, 0.48);
+      this.drawTileRowCentered(oppPool, oppPoolY, 0.48 * TILE_SIZE_SCALE);
     }
 
-    const handY = h - 44;
-    const myPoolY = handY - 58;
-    const myPoolScale = 0.48;
+    const handY = h - uiSpace(40);
+    const myPoolY = handY - uiSpace(52);
+    const myPoolScale = 0.48 * TILE_SIZE_SCALE;
     const myPoolTh = Math.round(TILE_FRAME_H * myPoolScale);
 
     const riverBlock = this.riverBlockHeight(riverScale);
     const riverGap = 12;
     const riverPairH = riverBlock * 2 + riverGap;
-    const zoneTop = oppPoolY + Math.round(TILE_FRAME_H * 0.48) / 2 + 8;
+    const zoneTop = oppPoolY + Math.round(TILE_FRAME_H * myPoolScale) / 2 + uiSpace(6);
     const zoneBottom = myPoolY - myPoolTh / 2;
     const zoneMid = (zoneTop + zoneBottom) / 2;
     const oppRiverTopY = zoneMid - riverPairH / 2 + riverTh / 2;
@@ -1058,7 +1078,7 @@ export class GameScene extends Phaser.Scene {
     ) {
       myHand = rr.hand;
     }
-    this.drawTileRowCentered(sortTilesByKind(myHand), handY, 0.65);
+    this.drawTileRowCentered(sortTilesByKind(myHand), handY, 0.65 * TILE_SIZE_SCALE);
   }
 
   /** ロン結果: 右上の目アイコン（押下で盤面 ↔ モーダル） */
@@ -1098,33 +1118,34 @@ export class GameScene extends Phaser.Scene {
 
     // 勝者側のみ: 手牌＋アガリ牌（ヴィラン=上 / ヒーロー=下）
     if (oppWon && winHand.length) {
-      this.drawHandWithAgari(sortTilesByKind(winHand), agari, 120, 0.72);
+      this.drawHandWithAgari(sortTilesByKind(winHand), agari, uiSpace(100), 0.72 * TILE_SIZE_SCALE);
     }
 
     const panel = this.add.graphics();
-    const panelTop = oppWon ? 175 : youWon ? 88 : 100;
-    const panelH = oppWon || youWon ? 380 : 440;
+    const panelLeft = 100;
+    const panelW = this.scale.width - 200;
+    const panelTop = oppWon ? uiSpace(145) : youWon ? uiSpace(64) : uiSpace(72);
+    const panelH = oppWon || youWon ? uiSpace(340) : uiSpace(360);
     panel.fillStyle(PHASER_COLOR.panel, 0.92);
-    panel.fillRoundedRect(140, panelTop, this.scale.width - 280, panelH, 16);
+    panel.fillRoundedRect(panelLeft, panelTop, panelW, panelH, 16);
     panel.lineStyle(1, 0xe8eef4, 0.12);
-    panel.strokeRoundedRect(140, panelTop, this.scale.width - 280, panelH, 16);
+    panel.strokeRoundedRect(panelLeft, panelTop, panelW, panelH, 16);
     this.root.add(panel);
 
     const title = rr.result === 'RON' ? '栄和' : '流局';
     this.root.add(
       this.add
-        .text(this.scale.width / 2, panelTop + 28, title, {
+        .text(this.scale.width / 2, panelTop + uiSpace(22), title, {
           fontFamily: FONT_DISPLAY,
-          fontSize: '26px',
+          fontSize: uiFont(26),
           color: UI_COLOR.ivory,
         })
         .setOrigin(0.5)
     );
 
-    let y = panelTop + 68;
+    const bodyTop = panelTop + uiSpace(56);
     if (rr.result === 'RON') {
       const limitLabel = formatLimit(rr.limit, rr.yakumanCount);
-      const cx = this.scale.width / 2;
 
       // サーバ値が小さすぎる（旧ハーフ点）場合は役から再計算
       let handPts = rr.handPoints ?? 0;
@@ -1137,114 +1158,96 @@ export class GameScene extends Phaser.Scene {
         totalPts = handPts;
       }
 
-      // 役: 左列最大4、右列に5つ目以降。ドラは末尾
+      // 2カラム: 左=役一覧 / 右=ドラ・翻・得点・待ち
+      const colGap = uiSpace(28);
+      const innerPad = uiSpace(28);
+      const colW = (panelW - innerPad * 2 - colGap) / 2;
+      const leftColX = panelLeft + innerPad;
+      const rightColX = panelLeft + innerPad + colW + colGap;
+      const rightCx = rightColX + colW / 2;
+
+      // --- 左: 役（行間を広めに） ---
       const yakuRows = buildYakuRows(rr.yakuDetails, rr.yaku, rr.han ?? 0);
-      if (yakuRows.length) {
-        const col0 = yakuRows.slice(0, 4);
-        const col1 = yakuRows.slice(4);
-        const rowH = 26;
-        const leftX = cx - (col1.length ? 160 : 40);
-        const rightX = cx + 40;
-        col0.forEach((row, i) => {
-          const yy = y + i * rowH;
-          this.root.add(
-            this.add
-              .text(leftX, yy, row.name, {
-                fontFamily: FONT_DISPLAY,
-                fontSize: '17px',
-                color: UI_COLOR.ivory,
-              })
-              .setOrigin(1, 0)
-          );
-          this.root.add(
-            this.add
-              .text(leftX + 12, yy, `${row.han}翻`, {
-                fontFamily: FONT_DISPLAY,
-                fontSize: '17px',
-                color: UI_COLOR.gold,
-              })
-              .setOrigin(0, 0)
-          );
-        });
-        col1.forEach((row, i) => {
-          const yy = y + i * rowH;
-          this.root.add(
-            this.add
-              .text(rightX + 100, yy, row.name, {
-                fontFamily: FONT_DISPLAY,
-                fontSize: '17px',
-                color: UI_COLOR.ivory,
-              })
-              .setOrigin(1, 0)
-          );
-          this.root.add(
-            this.add
-              .text(rightX + 112, yy, `${row.han}翻`, {
-                fontFamily: FONT_DISPLAY,
-                fontSize: '17px',
-                color: UI_COLOR.gold,
-              })
-              .setOrigin(0, 0)
-          );
-        });
-        y += Math.max(col0.length, col1.length, 1) * rowH + 10;
-      }
+      const yakuRowH = uiSpace(28);
+      yakuRows.forEach((row, i) => {
+        const yy = bodyTop + i * yakuRowH;
+        this.root.add(
+          this.add.text(leftColX, yy, row.name, {
+            fontFamily: FONT_DISPLAY,
+            fontSize: uiFont(17),
+            color: UI_COLOR.ivory,
+          })
+        );
+        this.root.add(
+          this.add
+            .text(leftColX + colW, yy, `${row.han}翻`, {
+              fontFamily: FONT_DISPLAY,
+              fontSize: uiFont(17),
+              color: UI_COLOR.gold,
+            })
+            .setOrigin(1, 0)
+        );
+      });
 
-      // ドラ表示牌のみ
-      y = this.drawDoraRow(y, rr.doraIndicator ?? s.doraIndicator);
-      y += 6;
+      // --- 右: ドラ → 翻 → 得点 → 待ち ---
+      let ry = bodyTop;
+      ry = this.drawDoraRow(ry, rr.doraIndicator ?? s.doraIndicator, rightCx);
+      ry += uiSpace(8);
 
-      const hanLine = limitLabel
-        ? `${rr.han ?? 0}翻　${limitLabel}`
-        : `${rr.han ?? 0}翻`;
+      const hanLine = limitLabel ? `${rr.han ?? 0}翻　${limitLabel}` : `${rr.han ?? 0}翻`;
       this.root.add(
         this.add
-          .text(cx, y, hanLine, {
+          .text(rightCx, ry, hanLine, {
             fontFamily: FONT_DISPLAY,
-            fontSize: '15px',
+            fontSize: uiFont(15),
             color: UI_COLOR.gold,
           })
           .setOrigin(0.5, 0)
       );
-      y += 26;
+      ry += uiSpace(28);
 
       this.root.add(
         this.add
-          .text(cx, y, formatPointsDisplay(totalPts), {
+          .text(rightCx, ry, formatPointsDisplay(totalPts), {
             fontFamily: FONT_DISPLAY,
-            fontSize: '36px',
+            fontSize: uiFont(32),
             color: UI_COLOR.accentSoft,
           })
           .setOrigin(0.5, 0)
       );
-      y += 36;
+      ry += uiSpace(40);
 
-      // 待ち牌
       if (rr.waits?.length) {
         this.root.add(
           this.add
-            .text(cx, y, '待ち', {
+            .text(rightCx, ry, '待ち', {
               fontFamily: FONT_DISPLAY,
-              fontSize: '12px',
+              fontSize: uiFont(12),
               color: UI_COLOR.muted,
             })
             .setOrigin(0.5, 0)
         );
-        y += 20;
+        ry += uiSpace(22);
         const waitTiles: TileView[] = rr.waits.map((kind, i) => ({ id: -1000 - i, kind }));
-        this.drawTileRowCentered(waitTiles, y + Math.round(TILE_FRAME_H * 0.55) / 2, 0.55);
+        const waitScale = 0.55 * TILE_SIZE_SCALE;
+        this.drawTileRowAt(
+          waitTiles,
+          rightCx,
+          ry + Math.round(TILE_FRAME_H * waitScale) / 2,
+          waitScale
+        );
       }
     } else {
       this.root.add(
         this.add
-          .text(this.scale.width / 2, y, '17巡打ち切り — 得点変動なし', {
+          .text(this.scale.width / 2, bodyTop, '17巡打ち切り — 得点変動なし', {
             fontFamily: FONT_UI,
-            fontSize: '15px',
+            fontSize: uiFont(15),
             color: UI_COLOR.muted,
             wordWrap: { width: this.scale.width - 340 },
             align: 'center',
           })
-          .setOrigin(0.5)
+          .setOrigin(0.5, 0)
       );
     }
 
@@ -1252,8 +1255,8 @@ export class GameScene extends Phaser.Scene {
       this.drawHandWithAgari(
         sortTilesByKind(winHand),
         agari,
-        this.scale.height - 56,
-        0.72
+        this.scale.height - uiSpace(48),
+        0.72 * TILE_SIZE_SCALE
       );
     }
 
@@ -1273,33 +1276,51 @@ export class GameScene extends Phaser.Scene {
     );
   }
 
-  /** ドラ表示牌の画像のみ（「ドラ」ラベル + 表示牌） */
-  private drawDoraRow(y: number, indicator: TileView | null | undefined): number {
-    const cx = this.scale.width / 2;
-    const rowY = y + Math.round(TILE_FRAME_H * 0.55) / 2;
+  /** ドラ表示牌の画像のみ（「ドラ」ラベル + 表示牌）。centerX 省略時は画面中央。 */
+  private drawDoraRow(
+    y: number,
+    indicator: TileView | null | undefined,
+    centerX?: number
+  ): number {
+    const cx = centerX ?? this.scale.width / 2;
+    const doraScale = 0.55 * TILE_SIZE_SCALE;
+    const rowY = y + Math.round(TILE_FRAME_H * doraScale) / 2;
     this.root.add(
       this.add
-        .text(cx - 36, rowY, 'ドラ', {
+        .text(cx - uiSpace(28), rowY, 'ドラ', {
           fontFamily: FONT_UI,
-          fontSize: '12px',
+          fontSize: uiFont(12),
           color: UI_COLOR.muted,
         })
         .setOrigin(1, 0.5)
     );
     if (indicator) {
-      this.addTileSprite(cx + 8, rowY, indicator, 0.55);
+      this.addTileSprite(cx + uiSpace(6), rowY, indicator, doraScale);
     } else {
       this.root.add(
         this.add
-          .text(cx + 8, rowY, '—', {
+          .text(cx + uiSpace(6), rowY, '—', {
             fontFamily: FONT_UI,
-            fontSize: '12px',
+            fontSize: uiFont(12),
             color: UI_COLOR.muted,
           })
           .setOrigin(0.5)
       );
     }
-    return y + Math.round(TILE_FRAME_H * 0.55) + 12;
+    return y + Math.round(TILE_FRAME_H * doraScale) + uiSpace(10);
+  }
+
+  /** 指定 X 中心に牌を横一列で並べる */
+  private drawTileRowAt(tiles: TileView[], centerX: number, y: number, scale: number) {
+    if (!tiles.length) return;
+    const tw = Math.round(TILE_FRAME_W * scale);
+    const gap = TILE_GAP;
+    const totalW = tiles.length * (tw + gap) - gap;
+    let x = centerX - totalW / 2 + tw / 2;
+    tiles.forEach((t) => {
+      this.addTileSprite(x, y, t, scale);
+      x += tw + gap;
+    });
   }
 
   /** 手牌の右にアガリ牌を離して並べる */
@@ -1329,7 +1350,7 @@ export class GameScene extends Phaser.Scene {
         this.add
           .text(x, y + th / 2 + 8, 'アガリ', {
             fontFamily: FONT_DISPLAY,
-            fontSize: '11px',
+            fontSize: uiFont(11),
             color: UI_COLOR.gold,
           })
           .setOrigin(0.5, 0)
@@ -1348,7 +1369,7 @@ export class GameScene extends Phaser.Scene {
       this.add
         .text(this.scale.width / 2, 200, 'マッチ終了', {
           fontFamily: FONT_DISPLAY,
-          fontSize: '32px',
+          fontSize: uiFont(32),
           color: UI_COLOR.ivory,
         })
         .setOrigin(0.5)
@@ -1357,7 +1378,7 @@ export class GameScene extends Phaser.Scene {
       this.add
         .text(this.scale.width / 2, 260, result, {
           fontFamily: FONT_UI,
-          fontSize: '22px',
+          fontSize: uiFont(22),
           color: UI_COLOR.accentSoft,
         })
         .setOrigin(0.5)
@@ -1366,7 +1387,7 @@ export class GameScene extends Phaser.Scene {
       this.add
         .text(this.scale.width / 2, 310, `${formatPoints(youScore)}  —  ${formatPoints(oppScore)}`, {
           fontFamily: FONT_UI,
-          fontSize: '20px',
+          fontSize: uiFont(20),
           color: UI_COLOR.ivory,
         })
         .setOrigin(0.5)
@@ -1422,7 +1443,7 @@ export class GameScene extends Phaser.Scene {
     const btn = this.add
       .text(x, y, label, {
         fontFamily: FONT_UI,
-        fontSize: '16px',
+        fontSize: uiFont(16),
         fontStyle: 'bold',
         color: enabled ? UI_COLOR.ivory : UI_COLOR.muted,
         backgroundColor: enabled ? UI_COLOR.accent : '#2a4a3c',

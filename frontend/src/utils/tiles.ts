@@ -1,5 +1,7 @@
 /** Mahjong tile sprite helpers (public/tiles.webp + tiles.json). */
 
+import { TILE_SIZE_SCALE } from '../constants/theme';
+
 export const TILES_KEY = 'tiles';
 export const TILES_PATH = '/tiles.webp';
 export const TILES_META_PATH = '/tiles.json';
@@ -7,11 +9,11 @@ export const TILES_META_PATH = '/tiles.json';
 export const TILE_FRAME_W = 47;
 export const TILE_FRAME_H = 63;
 
-/** Display scale in GameScene. */
-export const TILE_SCALE = 0.85;
+/** Display scale in GameScene (base × TILE_SIZE_SCALE ≈ 1.3×). */
+export const TILE_SCALE = 0.85 * TILE_SIZE_SCALE;
 export const TILE_DISPLAY_W = Math.round(TILE_FRAME_W * TILE_SCALE);
 export const TILE_DISPLAY_H = Math.round(TILE_FRAME_H * TILE_SCALE);
-export const TILE_GAP = 4;
+export const TILE_GAP = Math.max(4, Math.round(4 * TILE_SIZE_SCALE));
 
 export type TileMeta = {
   tileWidth: number;

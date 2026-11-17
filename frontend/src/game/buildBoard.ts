@@ -1,6 +1,6 @@
 import * as Phaser from 'phaser';
 import type { PublicState, TileView } from '../types/protocol';
-import { FONT_UI, PHASER_COLOR, UI_COLOR } from '../constants/theme';
+import { FONT_UI, PHASER_COLOR, TILE_SIZE_SCALE, UI_COLOR, uiFont, uiSpace } from '../constants/theme';
 import { sortTilesByKind, TILE_FRAME_W, TILE_GAP } from '../utils/tiles';
 import { addTileSprite, TILE_DISPLAY_H, TILE_DISPLAY_W } from './tileSprites';
 
@@ -68,14 +68,16 @@ export class BuildBoard {
       statusMsg = `13枚選んで OK（${selectedBuildIds.length}/13）※両者 OK で捨て牌開始`;
     }
 
-    const statusY = 118;
-    const startY = 168;
+    const statusY = uiSpace(118);
+    const startY = uiSpace(150);
     this.layer.add(
       this.scene.add
         .text(this.scene.scale.width / 2, statusY, statusMsg, {
           fontFamily: FONT_UI,
-          fontSize: '16px',
+          fontSize: uiFont(16),
           color: UI_COLOR.ivory,
+          wordWrap: { width: this.scene.scale.width - 48 },
+          align: 'center',
         })
         .setOrigin(0.5)
     );
@@ -83,12 +85,13 @@ export class BuildBoard {
     const cols = 17;
     const startX =
       (this.scene.scale.width - cols * (TILE_DISPLAY_W + TILE_GAP)) / 2 + TILE_DISPLAY_W / 2;
+    const rowPitch = TILE_DISPLAY_H + TILE_GAP + uiSpace(6);
 
     wall.forEach((t, i) => {
       const col = i % cols;
       const row = Math.floor(i / cols);
       const x = startX + col * (TILE_DISPLAY_W + TILE_GAP);
-      const y = startY + row * (TILE_DISPLAY_H + TILE_GAP + 8);
+      const y = startY + row * rowPitch;
 
       if (selectedSet.has(t.id)) {
         const slot = this.scene.add.rectangle(
@@ -121,11 +124,11 @@ export class BuildBoard {
       }
     });
 
-    const handY = this.scene.scale.height - 100;
+    const handY = this.scene.scale.height - uiSpace(88);
     const waitKinds = resolveWaitKinds(s, submitted, selectedBuildIds, previewWaits);
-    const buttonRowY = this.scene.scale.height - 36;
+    const buttonRowY = this.scene.scale.height - uiSpace(28);
     // OK ボタン中心 + 半幅 + 余白（理牌/クリア/OK の右側）
-    const waitsStartX = this.scene.scale.width / 2 + 140 + 58;
+    const waitsStartX = this.scene.scale.width / 2 + uiSpace(140) + uiSpace(58);
 
     const displayHand: TileView[] = submitted
       ? (s.you.hand ?? [])
@@ -154,7 +157,7 @@ export class BuildBoard {
         this.scene.add
           .text(this.scene.scale.width / 2, handY, '（ここへ移動）', {
             fontFamily: FONT_UI,
-            fontSize: '13px',
+            fontSize: uiFont(13),
             color: UI_COLOR.muted,
           })
           .setOrigin(0.5)
@@ -166,8 +169,8 @@ export class BuildBoard {
       addActionButton(
         this.scene,
         this.layer,
-        this.scene.scale.width / 2 - 140,
-        this.scene.scale.height - 36,
+        this.scene.scale.width / 2 - uiSpace(140),
+        buttonRowY,
         '理牌',
         () => cbs.onRiipai(),
         hasSelection
@@ -176,7 +179,7 @@ export class BuildBoard {
         this.scene,
         this.layer,
         this.scene.scale.width / 2,
-        this.scene.scale.height - 36,
+        buttonRowY,
         'クリア',
         () => cbs.onClear(),
         hasSelection
@@ -185,8 +188,8 @@ export class BuildBoard {
       addActionButton(
         this.scene,
         this.layer,
-        this.scene.scale.width / 2 + 140,
-        this.scene.scale.height - 36,
+        this.scene.scale.width / 2 + uiSpace(140),
+        buttonRowY,
         'OK',
         () => {
           if (!canOk) return;
@@ -198,16 +201,11 @@ export class BuildBoard {
     } else if (submitted) {
       this.layer.add(
         this.scene.add
-          .text(
-            this.scene.scale.width / 2,
-            this.scene.scale.height - 36,
-            oppOk ? '捨て合い開始…' : '相手の OK 待ち',
-            {
-              fontFamily: FONT_UI,
-              fontSize: '15px',
-              color: UI_COLOR.muted,
-            }
-          )
+          .text(this.scene.scale.width / 2, buttonRowY, oppOk ? '捨て合い開始…' : '相手の OK 待ち', {
+            fontFamily: FONT_UI,
+            fontSize: uiFont(15),
+            color: UI_COLOR.muted,
+          })
           .setOrigin(0.5)
       );
       drawWaitBesideButtons(this.scene, this.layer, waitKinds, waitsStartX, buttonRowY);
@@ -234,7 +232,7 @@ function drawWaitBesideButtons(
   waitKinds: string[],
   startX: number,
   y: number,
-  scale = 0.62
+  scale = 0.62 * TILE_SIZE_SCALE
 ) {
   if (!Array.isArray(waitKinds) || waitKinds.length === 0) return;
   const tw = Math.round(TILE_FRAME_W * scale);
@@ -243,7 +241,7 @@ function drawWaitBesideButtons(
     scene.add
       .text(startX - 4, y, '待ち', {
         fontFamily: FONT_UI,
-        fontSize: '11px',
+        fontSize: uiFont(11),
         color: UI_COLOR.muted,
       })
       .setOrigin(1, 0.5)
@@ -267,11 +265,11 @@ function addActionButton(
   const btn = scene.add
     .text(x, y, label, {
       fontFamily: FONT_UI,
-      fontSize: '16px',
+      fontSize: uiFont(16),
       fontStyle: 'bold',
       color: enabled ? UI_COLOR.ivory : UI_COLOR.muted,
       backgroundColor: enabled ? UI_COLOR.accent : '#2a4a3c',
-      padding: { x: 22, y: 12 },
+      padding: { x: uiSpace(18), y: uiSpace(8) },
     })
     .setOrigin(0.5);
   root.add(btn);

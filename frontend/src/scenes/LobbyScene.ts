@@ -16,7 +16,7 @@ const TIMEOUT_OPTIONS: { preset: TimeoutPreset; label: string }[] = [
   { preset: '120', label: '2分' },
   { preset: '180', label: '3分' },
   { preset: '300', label: '5分' },
-  { preset: 'inf', label: '無限（両者承認）' },
+  { preset: 'inf', label: '無限' },
 ];
 
 const ROUNDS_OPTIONS: { rounds: RoundsPreset; label: string }[] = [
@@ -101,7 +101,7 @@ export class LobbyScene extends Phaser.Scene {
             <div id="matchPanel" class="hidden">
               <div class="input-label" style="text-align:left;margin-bottom:6px;">対戦相手</div>
               <div class="lobby-players-box" id="playerList">
-                <div style="color:#8a9aab;text-align:center;font-size:0.9rem;">接続中...</div>
+                <div style="color:#8a9aab;text-align:center;font-size:0.75rem;">接続中...</div>
               </div>
               <div class="lobby-challenge-wait hidden" id="challengeWait">
                 ホストの承認を待っています…
@@ -319,7 +319,7 @@ export class LobbyScene extends Phaser.Scene {
     const box = this.overlay?.querySelector('#playerList');
     if (box) {
       box.innerHTML =
-        '<div style="color:#8a9aab;text-align:center;font-size:0.9rem;">接続中...</div>';
+        '<div style="color:#8a9aab;text-align:center;font-size:0.75rem;">接続中...</div>';
     }
 
     if (this.network) {
@@ -462,10 +462,10 @@ export class LobbyScene extends Phaser.Scene {
               ? '5分'
               : `${room.buildTimeoutSec}秒`;
     body.innerHTML = `
-      <li><span>ホスト</span><span>${escapeHtml(room.hostName || '—')}</span></li>
-      <li><span>局数</span><span>${room.totalRounds || '—'}局</span></li>
-      <li><span>制限時間</span><span>${escapeHtml(timeoutLabel)}</span></li>
-      <li><span>山札理牌</span><span>${room.wallSorted ? 'あり' : 'なし'}</span></li>
+      <li><span class="rules-k">ホスト</span><span class="rules-v">${escapeHtml(room.hostName || '—')}</span></li>
+      <li><span class="rules-k">局数</span><span class="rules-v">${room.totalRounds || '—'}局</span></li>
+      <li><span class="rules-k">制限時間</span><span class="rules-v">${escapeHtml(timeoutLabel)}</span></li>
+      <li><span class="rules-k">山札理牌</span><span class="rules-v">${room.wallSorted ? 'あり' : 'なし'}</span></li>
     `;
     modal.classList.remove('hidden');
   }

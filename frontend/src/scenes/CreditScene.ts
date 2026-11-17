@@ -1,5 +1,5 @@
 import * as Phaser from 'phaser';
-import { FONT_DISPLAY, FONT_UI, PHASER_COLOR, UI_COLOR } from '../constants/theme';
+import { FONT_DISPLAY, FONT_UI, PHASER_COLOR, UI_COLOR, uiFont, uiSpace } from '../constants/theme';
 
 export class CreditScene extends Phaser.Scene {
   constructor() {
@@ -21,11 +21,11 @@ export class CreditScene extends Phaser.Scene {
     panel.lineStyle(1, 0xe8eef4, 0.1);
     panel.strokeRoundedRect(28, panelPadY, width - 56, height - panelPadY * 2, 18);
 
-    let y = panelPadY + 18;
-    const titleSize = landscapeCompact ? '22px' : '28px';
-    const headSize = landscapeCompact ? '13px' : '15px';
-    const bodySize = landscapeCompact ? '12px' : '13px';
-    const lineSp = landscapeCompact ? 4 : 6;
+    let y = panelPadY + uiSpace(18);
+    const titleSize = landscapeCompact ? uiFont(18) : uiFont(22);
+    const headSize = landscapeCompact ? uiFont(11) : uiFont(12);
+    const bodySize = landscapeCompact ? uiFont(10) : uiFont(11);
+    const lineSp = landscapeCompact ? uiSpace(3) : uiSpace(5);
 
     const title = this.add.text(width / 2, y, 'Credits & Disclaimer', {
       fontFamily: FONT_DISPLAY,
@@ -167,7 +167,7 @@ export class CreditScene extends Phaser.Scene {
     const btn = this.add
       .text(x, y, label, {
         fontFamily: FONT_UI,
-        fontSize: '16px',
+        fontSize: uiFont(14),
         fontStyle: 'bold',
         color: UI_COLOR.ivory,
         backgroundColor: UI_COLOR.accent,

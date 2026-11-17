@@ -1,6 +1,6 @@
 import * as Phaser from 'phaser';
 import type { TileView } from '../types/protocol';
-import { FONT_UI, UI_COLOR } from '../constants/theme';
+import { FONT_UI, TILE_SIZE_SCALE, UI_COLOR, uiFont } from '../constants/theme';
 import {
   frameIndexForKind,
   TILE_DISPLAY_H,
@@ -12,8 +12,9 @@ import {
   TILES_KEY,
 } from '../utils/tiles';
 
-const RIVER_ROW_COUNTS = [6, 6, 5] as const;
-const RIVER_MAX_COLS = 6;
+/** 捨て牌: 2行×10列（3段目が切り牌に重ならないように） */
+const RIVER_ROW_COUNTS = [10, 10] as const;
+const RIVER_MAX_COLS = 10;
 
 export function addTileSprite(
   scene: Phaser.Scene,
@@ -72,7 +73,8 @@ export function riverRowPitch(scale: number): number {
 
 export function riverBlockHeight(scale: number): number {
   const th = Math.round(TILE_FRAME_H * scale);
-  return 2 * riverRowPitch(scale) + th;
+  const rows = RIVER_ROW_COUNTS.length;
+  return (rows - 1) * riverRowPitch(scale) + th;
 }
 
 export function drawRiverGrid(
@@ -98,9 +100,10 @@ export function drawRiverGrid(
   const left = (scene.scale.width - gridW) / 2;
   let idx = 0;
 
+  const lastRow = RIVER_ROW_COUNTS.length - 1;
   for (let fillRow = 0; fillRow < RIVER_ROW_COUNTS.length; fillRow++) {
     const cols = RIVER_ROW_COUNTS[fillRow];
-    const visualRow = side === 'opponent' ? 2 - fillRow : fillRow;
+    const visualRow = side === 'opponent' ? lastRow - fillRow : fillRow;
     const y = topCenterY + visualRow * pitch;
 
     for (let c = 0; c < cols; c++) {
@@ -129,7 +132,7 @@ export function drawWaitBottomRight(
   opts?: { marginRight?: number; y?: number; scale?: number }
 ) {
   if (!Array.isArray(waitKinds) || waitKinds.length === 0) return;
-  const scale = opts?.scale ?? 0.62;
+  const scale = opts?.scale ?? 0.62 * TILE_SIZE_SCALE;
   const tw = Math.round(TILE_FRAME_W * scale);
   const gap = TILE_GAP;
   const marginRight = opts?.marginRight ?? 16;
@@ -142,7 +145,7 @@ export function drawWaitBottomRight(
     scene.add
       .text(startX - 6, y, '待ち', {
         fontFamily: FONT_UI,
-        fontSize: '11px',
+        fontSize: uiFont(11),
         color: UI_COLOR.muted,
       })
       .setOrigin(1, 0.5)

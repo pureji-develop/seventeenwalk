@@ -5,6 +5,11 @@
   padding: 0;
 }
 
+/* Menu / overlay text ≈2× (rem). Phaser text uses UI_TEXT_SCALE separately. */
+:root {
+  font-size: 200%;
+}
+
 body {
   font-family: 'Source Sans 3', 'Segoe UI', sans-serif;
   background:
@@ -86,7 +91,7 @@ body {
 
 .menu-screen-overlay > .glass-container {
   pointer-events: auto;
-  width: min(480px, 100%);
+  width: min(640px, 100%);
   max-height: calc(100dvh - 24px);
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
@@ -100,8 +105,8 @@ body {
   position: relative;
   z-index: 10;
   width: 100%;
-  max-width: 480px;
-  padding: 40px;
+  max-width: 640px;
+  padding: 28px 32px;
   background: rgba(20, 58, 48, 0.62);
   backdrop-filter: blur(16px) saturate(160%);
   -webkit-backdrop-filter: blur(16px) saturate(160%);
@@ -144,10 +149,10 @@ body {
 /* Lobby waiting room: default landscape (browser + phone). */
 .menu-screen-overlay > .glass-container.lobby-shell {
   position: relative;
-  width: min(920px, 100%);
-  max-width: min(920px, 100%);
+  width: min(1100px, 100%);
+  max-width: min(1100px, 100%);
   max-height: calc(100dvh - 24px);
-  padding: 22px 26px;
+  padding: 20px 24px;
   text-align: left;
 }
 
@@ -190,7 +195,7 @@ body {
 .glass-container h1 {
   font-family: 'Shippori Mincho', 'Hiragino Mincho ProN', serif;
   font-weight: 700;
-  font-size: 2.35rem;
+  font-size: 2.35rem; /* root 200% → 旧16px基準の約2倍 */
   letter-spacing: 0.08em;
   color: #e8eef4;
   margin-bottom: 6px;
@@ -222,70 +227,70 @@ body {
   min-width: 0;
 }
 
-/* tiles.webp: 9列×4行、セル 47×63。字牌は row3 / col0–6 */
+/* tiles.webp: 9列×4行、セル 47×63。字牌は row3 / col0–6。表示≈1.3× */
 .mh-tile {
   display: block;
-  width: 30px;
-  height: 40px;
+  width: 39px;
+  height: 52px;
   flex-shrink: 0;
   border-radius: 3px;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
   background-image: url('/tiles.webp');
   background-repeat: no-repeat;
-  background-size: calc(9 * 30px) calc(4 * 40px);
+  background-size: calc(9 * 39px) calc(4 * 52px);
 }
 
 .mh-tile[data-kind='ton'] {
-  background-position: calc(0 * -30px) calc(3 * -40px);
+  background-position: calc(0 * -39px) calc(3 * -52px);
 }
 .mh-tile[data-kind='nan'] {
-  background-position: calc(1 * -30px) calc(3 * -40px);
+  background-position: calc(1 * -39px) calc(3 * -52px);
 }
 .mh-tile[data-kind='sha'] {
-  background-position: calc(2 * -30px) calc(3 * -40px);
+  background-position: calc(2 * -39px) calc(3 * -52px);
 }
 .mh-tile[data-kind='pei'] {
-  background-position: calc(3 * -30px) calc(3 * -40px);
+  background-position: calc(3 * -39px) calc(3 * -52px);
 }
 .mh-tile[data-kind='haku'] {
-  background-position: calc(4 * -30px) calc(3 * -40px);
+  background-position: calc(4 * -39px) calc(3 * -52px);
 }
 .mh-tile[data-kind='hatsu'] {
-  background-position: calc(5 * -30px) calc(3 * -40px);
+  background-position: calc(5 * -39px) calc(3 * -52px);
 }
 .mh-tile[data-kind='chun'] {
-  background-position: calc(6 * -30px) calc(3 * -40px);
+  background-position: calc(6 * -39px) calc(3 * -52px);
 }
 
 @media (max-width: 420px) {
   .mh-tile {
-    width: 24px;
-    height: 32px;
-    background-size: calc(9 * 24px) calc(4 * 32px);
+    width: 31px;
+    height: 42px;
+    background-size: calc(9 * 31px) calc(4 * 42px);
   }
   .mh-tile[data-kind='ton'] {
-    background-position: calc(0 * -24px) calc(3 * -32px);
+    background-position: calc(0 * -31px) calc(3 * -42px);
   }
   .mh-tile[data-kind='nan'] {
-    background-position: calc(1 * -24px) calc(3 * -32px);
+    background-position: calc(1 * -31px) calc(3 * -42px);
   }
   .mh-tile[data-kind='sha'] {
-    background-position: calc(2 * -24px) calc(3 * -32px);
+    background-position: calc(2 * -31px) calc(3 * -42px);
   }
   .mh-tile[data-kind='pei'] {
-    background-position: calc(3 * -24px) calc(3 * -32px);
+    background-position: calc(3 * -31px) calc(3 * -42px);
   }
   .mh-tile[data-kind='haku'] {
-    background-position: calc(4 * -24px) calc(3 * -32px);
+    background-position: calc(4 * -31px) calc(3 * -42px);
   }
   .mh-tile[data-kind='hatsu'] {
-    background-position: calc(5 * -24px) calc(3 * -32px);
+    background-position: calc(5 * -31px) calc(3 * -42px);
   }
   .mh-tile[data-kind='chun'] {
-    background-position: calc(6 * -24px) calc(3 * -32px);
+    background-position: calc(6 * -31px) calc(3 * -42px);
   }
   .login-title-row h1 {
-    font-size: 1.85rem;
+    font-size: 1.45rem;
   }
 }
 
@@ -430,12 +435,17 @@ body {
 
 .lobby-actions-row {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   gap: 10px;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .lobby-actions-row .action-button {
   margin-top: 0;
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .lobby-options {
@@ -588,10 +598,11 @@ body {
 }
 
 .rules-modal-list li {
-  display: flex;
-  justify-content: space-between;
-  gap: 16px;
-  padding: 8px 0;
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  column-gap: 20px;
+  align-items: baseline;
+  padding: 10px 0;
   border-bottom: 1px solid rgba(232, 238, 244, 0.1);
   font-size: 0.95rem;
   color: #e8eef4;
@@ -601,8 +612,20 @@ body {
   border-bottom: none;
 }
 
+.rules-modal-list li .rules-k,
 .rules-modal-list li span:first-child {
   color: #8a9f94;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.rules-modal-list li .rules-v,
+.rules-modal-list li span:last-child {
+  text-align: right;
+  white-space: nowrap;
+  overflow-wrap: normal;
+  word-break: keep-all;
+  min-width: 0;
 }
 
 #rulesOkBtn {
@@ -610,26 +633,38 @@ body {
   width: 100%;
 }
 
-/* Full-screen modals sit on the overlay (sibling of lobby-shell), never scroll. */
+#rulesModal .challenge-modal-card {
+  width: min(520px, calc(100vw - 32px));
+  max-width: calc(100vw - 32px);
+  box-sizing: border-box;
+}
+
+/* Full-screen modals sit on the overlay (sibling of lobby-shell). */
 .challenge-modal.host-rules-modal {
   position: fixed;
   inset: 0;
   border-radius: 0;
   z-index: 40;
-  padding: 20px 16px;
-  overflow: hidden;
-  align-items: center;
+  padding: 12px 16px;
+  overflow-x: hidden;
+  overflow-y: auto;
+  align-items: safe center;
   justify-content: center;
 }
 
 .host-rules-card {
-  width: min(440px, 100%);
-  max-width: 100%;
-  max-height: none;
-  padding: 24px 22px 20px;
+  width: min(520px, calc(100vw - 32px));
+  max-width: calc(100vw - 32px);
+  max-height: calc(100dvh - 24px);
+  margin: auto;
+  padding: 16px 18px 14px;
   text-align: left;
-  overflow: visible;
+  overflow: hidden;
   flex-shrink: 0;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
 }
 
 .host-rules-options {
@@ -637,6 +672,10 @@ body {
   background: transparent;
   border: none;
   padding: 0;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
 }
 
 .host-rules-options .input-label {
@@ -653,20 +692,45 @@ body {
   gap: 6px;
 }
 
+/* 制限時間: 短いラベルを1行4列で並べる */
+.host-rules-options #timeoutOpts {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 6px;
+}
+
 .host-rules-options .lobby-chip {
-  padding: 6px 11px;
-  font-size: 0.8rem;
+  padding: 6px 10px;
+  font-size: 0.78rem;
+  white-space: nowrap;
+  box-sizing: border-box;
+}
+
+.host-rules-options #timeoutOpts .lobby-chip {
+  width: 100%;
+  text-align: center;
+  justify-self: stretch;
+  min-width: 0;
+  padding-left: 4px;
+  padding-right: 4px;
 }
 
 .host-rules-actions {
-  margin-top: 18px;
+  margin-top: 12px;
+  /* 大きめ文字でもはみ出さないよう縦積み＋常にカード下部に固定 */
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex-shrink: 0;
 }
 
 .host-rules-actions .action-button {
   margin-top: 0;
+  width: 100%;
   white-space: nowrap;
-  padding: 12px 14px;
-  font-size: 0.95rem;
+  padding: 11px 14px;
+  font-size: 0.9rem;
+  flex-shrink: 0;
 }
 
 @media (max-height: 520px) {
@@ -690,6 +754,7 @@ body {
 
   .host-rules-actions {
     margin-top: 12px;
+    gap: 8px;
   }
 
   .host-rules-actions .action-button {
@@ -727,12 +792,22 @@ body {
 }
 
 .challenge-modal-card {
-  width: min(360px, 100%);
+  width: min(420px, calc(100vw - 32px));
+  max-width: calc(100vw - 32px);
+  box-sizing: border-box;
   background: rgba(12, 46, 36, 0.96);
   border: 1px solid rgba(232, 238, 244, 0.14);
   border-radius: 14px;
   padding: 20px 18px 16px;
   text-align: center;
+  overflow: visible;
+}
+
+/* 挑戦承認など横並びボタンもはみ出し防止 */
+.challenge-modal-card > .lobby-actions-row .action-button {
+  white-space: nowrap;
+  font-size: 0.9rem;
+  padding: 12px 10px;
 }
 
 .challenge-modal-text {
@@ -819,10 +894,10 @@ body {
   (max-height: 480px) {
   /* Login stays a centered vertical stack; only tighten spacing for short viewports. */
   .menu-screen-overlay > .glass-container.login-shell {
-    width: min(420px, 100%);
-    max-width: min(420px, 100%);
+    width: min(560px, 100%);
+    max-width: min(560px, 100%);
     max-height: calc(100dvh - 16px);
-    padding: 16px 20px;
+    padding: 14px 18px;
     border-radius: 16px;
   }
 
@@ -842,7 +917,7 @@ body {
   }
 
   .login-title-row h1 {
-    font-size: 1.85rem;
+    font-size: 1.9rem;
   }
 
   .login-brand .subtitle {
@@ -851,48 +926,48 @@ body {
   }
 
   .login-form .input-group {
-    margin-bottom: 8px;
+    margin-bottom: 6px;
   }
 
   .login-form .input-field {
-    padding: 9px 12px;
+    padding: 8px 10px;
     font-size: 0.95rem;
   }
 
   .login-actions {
-    gap: 8px;
+    gap: 6px;
   }
 
   .login-actions .action-button {
     padding: 10px 12px;
-    font-size: 0.9rem;
+    font-size: 0.95rem;
   }
 
   .mh-tile {
-    width: 22px;
-    height: 29px;
-    background-size: calc(9 * 22px) calc(4 * 29px);
+    width: 29px;
+    height: 38px;
+    background-size: calc(9 * 29px) calc(4 * 38px);
   }
   .mh-tile[data-kind='ton'] {
-    background-position: calc(0 * -22px) calc(3 * -29px);
+    background-position: calc(0 * -29px) calc(3 * -38px);
   }
   .mh-tile[data-kind='nan'] {
-    background-position: calc(1 * -22px) calc(3 * -29px);
+    background-position: calc(1 * -29px) calc(3 * -38px);
   }
   .mh-tile[data-kind='sha'] {
-    background-position: calc(2 * -22px) calc(3 * -29px);
+    background-position: calc(2 * -29px) calc(3 * -38px);
   }
   .mh-tile[data-kind='pei'] {
-    background-position: calc(3 * -22px) calc(3 * -29px);
+    background-position: calc(3 * -29px) calc(3 * -38px);
   }
   .mh-tile[data-kind='haku'] {
-    background-position: calc(4 * -22px) calc(3 * -29px);
+    background-position: calc(4 * -29px) calc(3 * -38px);
   }
   .mh-tile[data-kind='hatsu'] {
-    background-position: calc(5 * -22px) calc(3 * -29px);
+    background-position: calc(5 * -29px) calc(3 * -38px);
   }
   .mh-tile[data-kind='chun'] {
-    background-position: calc(6 * -22px) calc(3 * -29px);
+    background-position: calc(6 * -29px) calc(3 * -38px);
   }
 
   .lobby-room-info {
@@ -952,9 +1027,9 @@ body {
 /* Lobby: stack only on narrow portrait phones */
 @media (orientation: portrait) and (max-width: 640px) {
   .menu-screen-overlay > .glass-container.lobby-shell {
-    width: min(480px, 100%);
-    max-width: min(480px, 100%);
-    padding: 28px 22px;
+    width: min(640px, 100%);
+    max-width: min(640px, 100%);
+    padding: 20px 18px;
   }
 
   .lobby-layout {
@@ -981,7 +1056,7 @@ body {
   }
 
   .login-title-row h1 {
-    font-size: 1.55rem;
+    font-size: 1.7rem;
   }
 
   .login-actions {
@@ -990,6 +1065,6 @@ body {
 
   .login-actions .action-button {
     padding: 8px 10px;
-    font-size: 0.82rem;
+    font-size: 0.9rem;
   }
 }
